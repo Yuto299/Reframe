@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx tsc -w & nodemon dist/index.js",
+    "dev": "npx tsc -w & nodemon dist/app.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
