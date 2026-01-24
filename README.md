@@ -13,7 +13,7 @@
 このプロジェクトはモノレポ構成で、以下の3つのパッケージで構成されています：
 
 - **frontend**: Next.jsアプリケーション（フロントエンド）
-- **backend**: Express.js APIサーバー（バックエンド）
+- **backend**: Hono APIサーバー（バックエンド）
 - **shared**: 共有コード（ドメイン層）
 
 ## 🚀 セットアップ
@@ -29,7 +29,7 @@ npm install
 #### 方法1: docker-composeを使用
 
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 
 - フロントエンド: http://localhost:3000
