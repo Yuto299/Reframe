@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Reframe - Knowledge Network
 
-## Getting Started
+知識をつなげて可視化するアプリケーション。
 
-First, run the development server:
+## 📚 アーキテクチャ
+
+このプロジェクトは**クリーンアーキテクチャ（ヘキサゴナルアーキテクチャ）**の原則に基づいて設計されています。
+
+詳細は [アーキテクチャドキュメント](./docs/ARCHITECTURE.md) を参照してください。
+
+## 🏗️ プロジェクト構成
+
+このプロジェクトはモノレポ構成で、以下の3つのパッケージで構成されています：
+
+- **frontend**: Next.jsアプリケーション（フロントエンド）
+- **backend**: Express.js APIサーバー（バックエンド）
+- **shared**: 共有コード（ドメイン層）
+
+## 🚀 セットアップ
+
+### 依存関係のインストール
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### ローカル開発
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### 方法1: docker-composeを使用
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker-compose up
+```
 
-## Learn More
+- フロントエンド: http://localhost:3000
+- バックエンド: http://localhost:8080
 
-To learn more about Next.js, take a look at the following resources:
+#### 方法2: npm workspacesを使用
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# フロントエンド（別ターミナル）
+npm run dev:frontend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# バックエンド（別ターミナル）
+npm run dev:backend
+```
 
-## Deploy on Vercel
+### ビルド
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# すべてのパッケージをビルド
+npm run build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 個別にビルド
+npm run build:frontend
+npm run build:backend
+```
+
+## 🐳 Docker
+
+### ローカル開発
+
+```bash
+docker-compose up
+```
+
+### 本番ビルド
+
+```bash
+# バックエンド
+docker build -f backend/Dockerfile -t reframe-backend .
+
+# フロントエンド
+docker build -f frontend/Dockerfile -t reframe-frontend .
+```
+
+## ☁️ Cloud Runへのデプロイ
+
+### バックエンドのデプロイ
+
+```bash
+gcloud run deploy backend-api \
+  --source ./backend \
+  --platform managed \
+  --region asia-northeast1 \
+  --port 8080
+```
+
+### フロントエンドのデプロイ
+
+```bash
+# バックエンドのURLを取得
+BACKEND_URL=$(gcloud run services describe backend-api --region asia-northeast1 --format 'value(status.url)')
+
+# フロントエンドをデプロイ（環境変数にバックエンドURLを設定）
+gcloud run deploy frontend-app \
+  --source ./frontend \
+  --platform managed \
+  --region asia-northeast1 \
+  --port 3000 \
+  --set-env-vars NEXT_PUBLIC_API_URL=$BACKEND_URL
+```
+
+## 📖 参考資料
+
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
+- [Next.js App Router](https://nextjs.org/docs/app)
+- [Google Cloud Run](https://cloud.google.com/run/docs)
