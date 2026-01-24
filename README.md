@@ -13,7 +13,7 @@
 このプロジェクトはモノレポ構成で、以下の3つのパッケージで構成されています：
 
 - **frontend**: Next.jsアプリケーション（フロントエンド）
-- **backend**: Express.js APIサーバー（バックエンド）
+- **backend**: Hono APIサーバー（バックエンド）
 - **shared**: 共有コード（ドメイン層）
 
 ## 🚀 セットアップ
@@ -29,7 +29,7 @@ npm install
 #### 方法1: docker-composeを使用
 
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 
 - フロントエンド: http://localhost:3000
@@ -100,6 +100,17 @@ gcloud run deploy frontend-app \
   --port 3000 \
   --set-env-vars NEXT_PUBLIC_API_URL=$BACKEND_URL
 ```
+
+## 📚 ドキュメント
+
+プロジェクトの詳細なドキュメントは `docs/` ディレクトリにあります：
+
+- [要件定義書](./docs/REQUIREMENTS.md) - プロジェクトの要件と仕様
+- [機能仕様書](./docs/FEATURES.md) - 各機能の詳細仕様
+- [API仕様書](./docs/API.md) - RESTful APIの詳細仕様
+- [アーキテクチャドキュメント](./docs/ARCHITECTURE.md) - システムアーキテクチャの説明
+- [開発ガイドライン](./docs/DEVELOPMENT.md) - 開発環境のセットアップとコーディング規約
+- [デプロイガイド](./docs/DEPLOYMENT.md) - GCPへのデプロイ手順
 
 ## 📖 参考資料
 
