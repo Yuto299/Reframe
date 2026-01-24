@@ -2,18 +2,15 @@
 
 import { useState } from 'react';
 import { SearchResult, Knowledge } from '@/domain/models/Knowledge';
-import { MockKnowledgeRepository } from '@/infrastructure/repositories/MockKnowledgeRepository';
-import { SearchKnowledgeUseCase } from '@/application/usecases/SearchKnowledgeUseCase';
-import { ConnectKnowledgeUseCase } from '@/application/usecases/ConnectKnowledgeUseCase';
+import { KnowledgeTitle } from '@/domain/models/KnowledgeTitle';
+import { container } from '@/infrastructure/di/container';
+import { DomainError } from '@/domain/errors/DomainError';
+import { ApplicationError } from '@/application/errors/ApplicationError';
 import KnowledgeInput from '@/presentation/components/search/KnowledgeInput';
 import SearchResults from '@/presentation/components/search/SearchResults';
 import KnowledgeDetail from '@/presentation/components/search/KnowledgeDetail';
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus } from 'lucide-react';
-
-const repository = new MockKnowledgeRepository();
-const searchUseCase = new SearchKnowledgeUseCase(repository);
-const connectUseCase = new ConnectKnowledgeUseCase(repository);
 
 export default function SearchPage() {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -22,21 +19,20 @@ export default function SearchPage() {
     const [isSearching, setIsSearching] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [currentQuery, setCurrentQuery] = useState('');
-
-    // Note: user needs to generate the toast component first if not already done,
-    // but assuming standard installation includes it or I'll add it if missing in next step.
-    // shadcn init installs it usually under hooks/use-toast.ts but I didn't verify file.
-    // I will check file existence in next step or just rely on manual add.
+    const [error, setError] = useState<string | null>(null);
 
     const handleSearch = async (query: string) => {
         setIsSearching(true);
         setCurrentQuery(query);
         setSelectedIds([]);
+        setError(null);
         try {
-            const results = await searchUseCase.execute(query);
+            const results = await container.searchKnowledgeUseCase.execute(query);
             setSearchResults(results);
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
+            console.error('Search error:', err);
         } finally {
             setIsSearching(false);
         }
@@ -45,20 +41,43 @@ export default function SearchPage() {
     const handleConnect = async () => {
         if (selectedIds.length === 0) return;
         setIsConnecting(true);
+        setError(null);
         try {
-            const newKnowledge = await repository.create({
-                title: currentQuery.slice(0, 50) + (currentQuery.length > 50 ? '...' : ''),
+            // タイトルの生成はドメインロジックを使用
+            const title = KnowledgeTitle.create(currentQuery);
+            
+            const newKnowledge = await container.createKnowledgeUseCase.execute({
+                title: title.getFullTitle(),
                 content: currentQuery,
             });
-            await connectUseCase.execute(newKnowledge.id, selectedIds);
+            await container.connectKnowledgeUseCase.execute(newKnowledge.id, selectedIds);
 
             setSearchResults([]);
             setSelectedIds([]);
             setCurrentQuery('');
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            let errorMessage = 'Failed to connect knowledge';
+            if (err instanceof DomainError || err instanceof ApplicationError) {
+                errorMessage = err.message;
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+            setError(errorMessage);
+            console.error('Connect error:', err);
         } finally {
             setIsConnecting(false);
+        }
+    };
+
+    const handleViewDetail = async (id: string) => {
+        try {
+            setError(null);
+            const k = await container.getKnowledgeByIdUseCase.execute(id);
+            setDetailKnowledge(k);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load knowledge details';
+            setError(errorMessage);
+            console.error('View detail error:', err);
         }
     };
 
@@ -72,6 +91,11 @@ export default function SearchPage() {
 
                 <section className="bg-background">
                     <KnowledgeInput onSearch={handleSearch} isSearching={isSearching} />
+                    {error && (
+                        <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md text-destructive text-sm">
+                            {error}
+                        </div>
+                    )}
                 </section>
 
                 {searchResults.length > 0 && (
@@ -80,10 +104,7 @@ export default function SearchPage() {
                             results={searchResults}
                             selectedIds={selectedIds}
                             onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])}
-                            onViewDetail={async (id) => {
-                                const k = await repository.findById(id);
-                                setDetailKnowledge(k);
-                            }}
+                            onViewDetail={handleViewDetail}
                         />
 
                         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 fade-in duration-300">

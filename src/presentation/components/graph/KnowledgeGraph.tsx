@@ -97,7 +97,7 @@ export default function KnowledgeGraph({
         setEdges(newEdges);
     }, [knowledgeList, showDate, setNodes, setEdges]);
 
-    const onNodeClickInternal = useCallback((_: any, node: Node) => {
+    const onNodeClickInternal = useCallback((_event: unknown, node: Node) => {
         const k = knowledgeList.find(item => item.id === node.id);
         if (k) onNodeClick(k);
     }, [knowledgeList, onNodeClick]);

@@ -197,11 +197,14 @@ export class MockKnowledgeRepository implements KnowledgeRepository {
 
                 if (source && target) {
                     // Add bidirectional connection
-                    if (!source.connections.includes(targetId)) {
-                        source.connections.push(targetId);
+                    // Note: Mock実装のため、型アサーションを使用
+                    const sourceConnections = source.connections as string[];
+                    const targetConnections = target.connections as string[];
+                    if (!sourceConnections.includes(targetId)) {
+                        sourceConnections.push(targetId);
                     }
-                    if (!target.connections.includes(sourceId)) {
-                        target.connections.push(sourceId);
+                    if (!targetConnections.includes(sourceId)) {
+                        targetConnections.push(sourceId);
                     }
                 }
                 resolve();
@@ -217,8 +220,11 @@ export class MockKnowledgeRepository implements KnowledgeRepository {
 
                 if (source && target) {
                     // Remove bidirectional connection
-                    source.connections = source.connections.filter((id) => id !== targetId);
-                    target.connections = target.connections.filter((id) => id !== sourceId);
+                    // Note: Mock実装のため、型アサーションを使用
+                    const sourceConnections = source.connections as string[];
+                    const targetConnections = target.connections as string[];
+                    (source as any).connections = sourceConnections.filter((id) => id !== targetId);
+                    (target as any).connections = targetConnections.filter((id) => id !== sourceId);
                 }
                 resolve();
             }, 100);
