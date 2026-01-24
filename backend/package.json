@@ -12,7 +12,8 @@
   "dependencies": {
     "@reframe/shared": "*",
     "hono": "^4.0.0",
-    "@hono/node-server": "^1.8.0"
+    "@hono/node-server": "^1.8.0",
+    "@google-cloud/vertexai": "^1.10.0"
   },
   "devDependencies": {
     "@types/node": "^20",
