@@ -1,5 +1,7 @@
-import { apiClient } from './client';
+import { apiClient, ApiError } from './client';
 import { Knowledge, CreateKnowledgeInput, SearchResult } from '@reframe/shared';
+
+export { ApiError };
 
 export const knowledgeApi = {
     /**

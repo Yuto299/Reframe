@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Knowledge } from '@reframe/shared';
-import { knowledgeApi, ApiError } from '@/lib/api/knowledge';
+import { knowledgeApi } from '@/lib/api/knowledge';
+import { ApiError } from '@/lib/api/client';
 import KnowledgeGraph from '@/presentation/components/graph/KnowledgeGraph';
 import GraphSettings from '@/presentation/components/graph/GraphSettings';
 import KnowledgeDetail from '@/presentation/components/search/KnowledgeDetail'; // Reuse Sheet detail for consistency
