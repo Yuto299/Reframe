@@ -1,49 +1,65 @@
-# Build stage
-FROM node:22-alpine AS builder
-
+# ==================================
+# Base stage - 共通の基盤イメージ
+# ==================================
+FROM node:22-alpine AS base
 WORKDIR /app
 
-# Copy workspace files
+# ==================================
+# Dependencies stage - 依存関係インストール（共通）
+# ==================================
+FROM base AS deps
+
 COPY package*.json ./
 COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
-# Install dependencies
 RUN npm ci
 
-# Copy source files
+# ==================================
+# Development stage - 開発環境
+# ==================================
+FROM deps AS development
+
 COPY shared ./shared
 COPY frontend ./frontend
 
-# Build frontend
+WORKDIR /app/frontend
+
+ENV NODE_ENV=development
+ENV PORT=3000
+EXPOSE 3000
+
+# ==================================
+# Builder stage - 本番ビルド用
+# ==================================
+FROM deps AS builder
+
+COPY shared ./shared
+COPY frontend ./frontend
+
 WORKDIR /app/frontend
 RUN npm run build
 
-# Production stage
-FROM node:22-alpine AS runner
+# ==================================
+# Production stage - 本番環境
+# ==================================
+FROM base AS production
 
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Copy package files
 COPY package*.json ./
 COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
-# Install production dependencies only
-RUN npm ci --omit=dev --workspace=shared --workspace=frontend
+RUN npm ci --omit=dev --workspace=@reframe/shared --workspace=@reframe/frontend
 
-# Copy built files from standalone output
 COPY --from=builder /app/frontend/.next/standalone ./
 COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
 COPY --from=builder /app/frontend/public ./frontend/public
 
 WORKDIR /app
 
-EXPOSE 3000
-
+ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+EXPOSE 3000
 
 CMD ["node", "frontend/server.js"]
