@@ -26,14 +26,15 @@ npm install
 
 ### ローカル開発
 
-#### 方法1: docker-composeを使用
+#### 方法1: Docker Composeを使用（推奨）
 
 ```bash
-docker-compose up -d
+npm run docker:dev
 ```
 
 - フロントエンド: http://localhost:3000
 - バックエンド: http://localhost:8080
+- PostgreSQL: localhost:5432
 
 #### 方法2: npm workspacesを使用
 
@@ -58,20 +59,51 @@ npm run build:backend
 
 ## 🐳 Docker
 
-### ローカル開発
+Docker Composeを使用して開発環境・本番環境を構築できます。
+
+### npm scripts（推奨）
+
+| コマンド | 説明 |
+|----------|------|
+| `npm run docker:dev` | 開発環境を起動 |
+| `npm run docker:dev:build` | 開発環境をビルドして起動 |
+| `npm run docker:dev:down` | 開発環境を停止 |
+| `npm run docker:prod` | 本番環境を起動（バックグラウンド） |
+| `npm run docker:prod:build` | 本番環境をビルドして起動 |
+| `npm run docker:prod:down` | 本番環境を停止 |
 
 ```bash
-docker-compose up
+# 開発環境の起動
+npm run docker:dev
+
+# コードを変更した後、再ビルドして起動
+npm run docker:dev:build
+
+# 停止
+npm run docker:dev:down
 ```
 
-### 本番ビルド
+### Docker Compose直接実行
 
 ```bash
-# バックエンド
-docker build -f backend/Dockerfile -t reframe-backend .
+# 開発環境
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
-# フロントエンド
-docker build -f frontend/Dockerfile -t reframe-frontend .
+# 本番環境
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+### 個別イメージのビルド
+
+```bash
+# バックエンド（本番）
+docker build --target production -f backend/Dockerfile -t reframe-backend .
+
+# バックエンド（開発）
+docker build --target development -f backend/Dockerfile -t reframe-backend-dev .
+
+# フロントエンド（本番）
+docker build --target production -f frontend/Dockerfile -t reframe-frontend .
 ```
 
 ## ☁️ Cloud Runへのデプロイ

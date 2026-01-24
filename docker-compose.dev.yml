@@ -1,0 +1,28 @@
+# ==================================
+# 開発環境用オーバーライド
+# ==================================
+# 使用方法: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./shared/src:/app/shared/src
+    command: npm run dev
+
+  frontend:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/public:/app/frontend/public
+      - ./shared/src:/app/shared/src
+    command: npm run dev

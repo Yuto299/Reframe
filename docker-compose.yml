@@ -1,3 +1,10 @@
+# ==================================
+# 共通基盤 - 全環境で共通の設定
+# ==================================
+# 使用方法:
+#   開発環境: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   本番環境: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
 services:
   db:
     image: postgres:16
@@ -16,13 +23,6 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      - NODE_ENV=development
-      - PORT=8080
-    volumes:
-      - ./backend/src:/app/backend/src
-      - ./shared:/app/shared
-    command: npm run dev --workspace=backend
     depends_on:
       - db
 
@@ -32,16 +32,8 @@ services:
       dockerfile: frontend/Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
-    volumes:
-      - ./frontend/:/app/frontend
-      - ./shared:/app/shared
     depends_on:
       - backend
-    command: npm run dev --workspace=frontend
 
 volumes:
   pgdata:
-  node_modules:

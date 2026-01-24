@@ -1,46 +1,63 @@
-# Build stage
-FROM node:22-alpine AS builder
-
+# ==================================
+# Base stage - 共通の基盤イメージ
+# ==================================
+FROM node:22-alpine AS base
 WORKDIR /app
 
-# Copy workspace files
+# ==================================
+# Dependencies stage - 依存関係インストール（共通）
+# ==================================
+FROM base AS deps
+
 COPY package*.json ./
 COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/
 
-# Install dependencies
 RUN npm ci
 
-# Copy source files
+# ==================================
+# Development stage - 開発環境
+# ==================================
+FROM deps AS development
+
 COPY shared ./shared
 COPY backend ./backend
 
-# Build backend
+WORKDIR /app/backend
+
+ENV NODE_ENV=development
+ENV PORT=8080
+EXPOSE 8080
+
+# ==================================
+# Builder stage - 本番ビルド用
+# ==================================
+FROM deps AS builder
+
+COPY shared ./shared
+COPY backend ./backend
+
 WORKDIR /app/backend
 RUN npm run build
 
-# Production stage
-FROM node:22-alpine
+# ==================================
+# Production stage - 本番環境
+# ==================================
+FROM base AS production
 
-WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
 COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/
 
-# Install production dependencies only
-RUN npm ci --omit=dev --workspace=shared --workspace=backend
+RUN npm ci --omit=dev --workspace=@reframe/shared --workspace=@reframe/backend
 
-# Copy built files
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/backend/dist ./backend/dist
 
 WORKDIR /app/backend
 
-EXPOSE 8080
-
 ENV NODE_ENV=production
 ENV PORT=8080
+EXPOSE 8080
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/backend/src/index.js"]
