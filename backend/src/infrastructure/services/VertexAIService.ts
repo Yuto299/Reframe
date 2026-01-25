@@ -1,11 +1,10 @@
-import { VertexAI, GenerativeModel } from '@google-cloud/vertexai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
  * Vertex AIサービスの設定
  */
 export interface VertexAIConfig {
-    project: string;
-    location: string;
+    apiKey?: string; // Google AI Studio APIキー
 }
 
 /**
@@ -18,31 +17,21 @@ export interface TopicSegment {
 
 /**
  * Vertex AIサービス
- * Generative AI APIとEmbeddings APIを提供
+ * Google AI Studio APIキーを使用してGenerative AI APIとEmbeddings APIを提供
  */
 export class VertexAIService {
-    private vertexAI: VertexAI;
-    private generativeModel: GenerativeModel;
+    private genAI: GoogleGenerativeAI;
     private config: VertexAIConfig;
 
     constructor(config?: Partial<VertexAIConfig>) {
-        this.config = {
-            project: config?.project ?? process.env.GOOGLE_CLOUD_PROJECT ?? '',
-            location: config?.location ?? process.env.VERTEX_AI_LOCATION ?? 'asia-northeast1',
-        };
-
-        if (!this.config.project) {
-            throw new Error('GOOGLE_CLOUD_PROJECT environment variable is required');
+        const apiKey = config?.apiKey ?? process.env.GOOGLE_AI_API_KEY;
+        
+        if (!apiKey) {
+            throw new Error('GOOGLE_AI_API_KEY environment variable is required');
         }
 
-        this.vertexAI = new VertexAI({
-            project: this.config.project,
-            location: this.config.location,
-        });
-
-        this.generativeModel = this.vertexAI.getGenerativeModel({
-            model: 'gemini-pro',
-        });
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.config = { apiKey };
     }
 
     /**
@@ -71,21 +60,21 @@ ${text}
 JSON配列のみを返してください。説明や追加のテキストは含めないでください。`;
 
         try {
-            const result = await this.generativeModel.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            });
-
-            const response = result.response;
-            const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+            // Google AI Studioで使用可能なモデル名
+            // gemini-2.5-flash が安定版で推奨
+            // 参考: https://ai.google.dev/gemini-api/docs/models/gemini
+            const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
 
             if (!responseText) {
-                throw new Error('No response from Vertex AI');
+                throw new Error('No response from Generative AI');
             }
 
             // JSONを抽出（```json や ``` で囲まれている可能性がある）
             const jsonMatch = responseText.match(/\[[\s\S]*\]/);
             if (!jsonMatch) {
-                throw new Error('Invalid response format from Vertex AI');
+                throw new Error('Invalid response format from Generative AI');
             }
 
             const topics = JSON.parse(jsonMatch[0]) as TopicSegment[];
@@ -106,7 +95,7 @@ JSON配列のみを返してください。説明や追加のテキストは含�
             });
         } catch (error) {
             if (error instanceof SyntaxError) {
-                throw new Error(`Failed to parse Vertex AI response: ${error.message}`);
+                throw new Error(`Failed to parse Generative AI response: ${error.message}`);
             }
             throw error instanceof Error
                 ? error
@@ -117,7 +106,7 @@ JSON配列のみを返してください。説明や追加のテキストは含�
     /**
      * テキストの埋め込みベクトルを生成
      * @param text 入力テキスト
-     * @returns 埋め込みベクトル（768次元）
+     * @returns 埋め込みベクトル
      */
     async generateEmbedding(text: string): Promise<number[]> {
         if (!text || text.trim().length === 0) {
@@ -125,16 +114,31 @@ JSON配列のみを返してください。説明や追加のテキストは含�
         }
 
         try {
-            // Embeddings APIは別のエンドポイントを使用
-            // 現時点では、Generative Modelを使用して簡易的に実装
-            // 本番環境では、textembedding-gecko@003を使用することを推奨
-            const result = await this.vertexAI.preview.getGenerativeModel({
-                model: 'textembedding-gecko@003',
-            }).embedContent({
-                content: { parts: [{ text: text.trim() }] },
-            });
+            // Google AI StudioのAPIキーを使用してEmbeddings APIを呼び出し
+            const apiKey = this.config.apiKey!;
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'models/text-embedding-004',
+                        content: {
+                            parts: [{ text: text.trim() }],
+                        },
+                    }),
+                }
+            );
 
-            const embedding = result.embedding?.values;
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to generate embedding: ${response.status} ${errorText}`);
+            }
+
+            const data = await response.json();
+            const embedding = data.embedding?.values;
             if (!embedding || embedding.length === 0) {
                 throw new Error('No embedding generated');
             }

@@ -29,8 +29,30 @@ export class SegmentTopicsUseCase {
         try {
             return await this.vertexAIService.segmentTopics(trimmedText);
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('SegmentTopicsUseCase error:', errorMessage);
+            console.error('Error details:', error);
+            
+            // より詳細なエラーメッセージを提供
+            if (errorMessage.includes('GOOGLE_AI_API_KEY')) {
+                throw new UseCaseExecutionError(
+                    'GOOGLE_AI_API_KEY environment variable is not set. Please check your .env file.'
+                );
+            }
+            if (errorMessage.includes('API key not valid') || errorMessage.includes('API_KEY_INVALID')) {
+                throw new UseCaseExecutionError(
+                    'Invalid API key. Please check your GOOGLE_AI_API_KEY in .env file.'
+                );
+            }
+            if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+                throw new UseCaseExecutionError(
+                    'Model not found. Please check the model name configuration.'
+                );
+            }
+            
+            // 元のエラーメッセージをそのまま返す（より具体的な情報を提供）
             throw new UseCaseExecutionError(
-                'Failed to segment topics',
+                `Failed to segment topics: ${errorMessage}`,
                 error instanceof Error ? error : new Error(String(error))
             );
         }

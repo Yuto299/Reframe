@@ -40,15 +40,19 @@ export const AnalyzeTopicsRequestSchema = z.object({
     text: z.string().min(1).max(10000).describe('分割するテキスト（1-10,000文字）'),
 });
 
-// TopicSegmentスキーマ
+// TopicSegmentスキーマ（関連ナレッジを含む）
 export const TopicSegmentSchema = z.object({
     title: z.string().min(1).max(200).describe('トピックのタイトル'),
     content: z.string().min(1).max(10000).describe('トピックの内容'),
+    relatedKnowledge: z
+        .array(SearchResultSchema)
+        .optional()
+        .describe('関連する既存ナレッジのリスト（関連度スコア付き）'),
 });
 
 // AnalyzeTopicsResponseスキーマ
 export const AnalyzeTopicsResponseSchema = z.object({
-    data: z.array(TopicSegmentSchema).describe('分割されたトピックのリスト'),
+    data: z.array(TopicSegmentSchema).describe('分割されたトピックのリスト（関連ナレッジ含む）'),
 });
 
 // ConnectTopicsRequestスキーマ

@@ -36,4 +36,5 @@ export interface SearchResult {
 export interface TopicSegment {
     title: string;
     content: string;
+    relatedKnowledge?: SearchResult[];
 }

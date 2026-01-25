@@ -340,9 +340,58 @@ const analyzeTopicsRoute = createRoute({
 app.openapi(analyzeTopicsRoute, async (c) => {
     try {
         const { text } = c.req.valid('json');
+        
+        console.log('Analyzing topics for text:', text.substring(0, 100) + '...');
+        
         const topics = await container.segmentTopicsUseCase.execute(text);
-        return c.json({ data: topics }, 200);
+        
+        console.log(`Segmented into ${topics.length} topics`);
+
+        // 各トピックに関連ナレッジを検索
+        const topicsWithRelatedKnowledge = await Promise.all(
+            topics.map(async (topic) => {
+                try {
+                    // トピックのテキスト（タイトル + 内容）で関連ナレッジを検索
+                    const topicText = `${topic.title}\n${topic.content}`;
+                    const relatedKnowledge = await container.searchRelatedKnowledgeUseCase.execute(
+                        topicText,
+                        0.7, // 閾値: 70%以上
+                        5 // 最大5件
+                    );
+
+                    // DateをISO文字列に変換、readonly配列を通常の配列に変換
+                    const serializedRelatedKnowledge = relatedKnowledge.map((r) => ({
+                        knowledge: {
+                            ...r.knowledge,
+                            createdAt: r.knowledge.createdAt.toISOString(),
+                            connections: [...r.knowledge.connections],
+                        },
+                        relevanceScore: r.relevanceScore,
+                    }));
+
+                    return {
+                        ...topic,
+                        relatedKnowledge: serializedRelatedKnowledge,
+                    };
+                } catch (error) {
+                    // 関連ナレッジ検索でエラーが発生しても、トピック自体は返す
+                    console.warn(`Failed to search related knowledge for topic "${topic.title}":`, error);
+                    return {
+                        ...topic,
+                        relatedKnowledge: [],
+                    };
+                }
+            })
+        );
+
+        return c.json({ data: topicsWithRelatedKnowledge }, 200);
     } catch (error) {
+        // エラーの詳細をログに出力
+        console.error('Error in analyzeTopicsRoute:', error);
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+        }
         throw error;
     }
 });

@@ -11,13 +11,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "hono": "^4.0.0",
-    "@hono/node-server": "^1.8.0",
     "@google-cloud/vertexai": "^1.10.0",
-    "@hono/zod-openapi": "^0.19.6",
+    "@google/generative-ai": "^0.24.1",
+    "@hono/node-server": "^1.8.0",
     "@hono/swagger-ui": "^0.5.3",
-    "zod": "^3.23.8",
-    "dotenv": "^16.4.5"
+    "@hono/zod-openapi": "^0.19.6",
+    "dotenv": "^16.4.5",
+    "hono": "^4.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",
