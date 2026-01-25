@@ -16,6 +16,15 @@ npm run dev
 
 サーバーは `http://localhost:8080` で起動します。
 
+### APIドキュメント
+
+開発サーバー起動後、以下のURLでAPIドキュメントを確認できます：
+
+- **Swagger UI**: http://localhost:8080/api/ui
+  - ブラウザでAPIを確認・テストできます
+- **OpenAPI仕様書**: http://localhost:8080/api/doc
+  - OpenAPI 3.0形式のJSON仕様書
+
 ## ビルド
 
 ```bash
