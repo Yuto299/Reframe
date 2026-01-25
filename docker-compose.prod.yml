@@ -1,0 +1,30 @@
+# ==================================
+# 本番環境用オーバーライド
+# ==================================
+# 使用方法: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    restart: unless-stopped
+    # 本番環境ではvolumesを使用しない（ビルド済みイメージを使用）
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    restart: unless-stopped
+    # 本番環境ではvolumesを使用しない（ビルド済みイメージを使用）
+
+  db:
+    restart: unless-stopped

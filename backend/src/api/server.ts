@@ -1,11 +1,32 @@
-import { Hono, Context } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { Context } from 'hono';
 import { cors } from 'hono/cors';
+import { swaggerUI } from '@hono/swagger-ui';
 import { knowledgeRoutes } from './routes/knowledge.js';
 import { DomainError } from '@/domain/errors/DomainError';
 import { ApplicationError } from '../application/errors/ApplicationError.js';
 
-export function createServer(): Hono {
-    const app = new Hono();
+export function createServer(): OpenAPIHono {
+    const app = new OpenAPIHono();
+
+    // OpenAPI設定
+    app.doc('/api/doc', {
+        openapi: '3.0.0',
+        info: {
+            version: '1.0.0',
+            title: 'Reframe API',
+            description: 'Reframe Knowledge Management API',
+        },
+        servers: [
+            {
+                url: 'http://localhost:3000',
+                description: '開発環境',
+            },
+        ],
+    });
+
+    // Swagger UI
+    app.get('/api/ui', swaggerUI({ url: '/api/doc' }));
 
     // Middleware
     app.use('*', cors());
