@@ -1,27 +1,11 @@
 {
-  "name": "reframe-monorepo",
+  "name": "reframe",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "description": "Knowledge Network - Frontend (Firebase) + Backend (Cloud Run)",
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:backend": "npm run dev --workspace=backend",
-    "build": "npm run build --workspaces",
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
-    "lint": "npm run lint --workspaces",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "docker:dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "docker:dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
-    "docker:prod:build": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
-    "docker:prod:down": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down"
-  },
-  "devDependencies": {
-    "typescript": "^5"
+    "docker:dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down"
   }
 }

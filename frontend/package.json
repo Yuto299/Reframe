@@ -1,7 +1,8 @@
 {
-  "name": "@reframe/frontend",
+  "name": "reframe-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "Reframe Frontend - Firebase Hosting deployment",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

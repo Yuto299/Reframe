@@ -1,8 +1,9 @@
 {
-  "name": "@reframe/backend",
+  "name": "reframe-backend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Reframe Backend API - Cloud Run deployment",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
