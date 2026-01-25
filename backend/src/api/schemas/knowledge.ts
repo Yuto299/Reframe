@@ -35,6 +35,36 @@ export const ConnectRequestSchema = z.object({
     targetIds: z.array(z.string()).min(1).describe('接続先の知識IDリスト'),
 });
 
+// AnalyzeTopicsRequestスキーマ
+export const AnalyzeTopicsRequestSchema = z.object({
+    text: z.string().min(1).max(10000).describe('分割するテキスト（1-10,000文字）'),
+});
+
+// TopicSegmentスキーマ
+export const TopicSegmentSchema = z.object({
+    title: z.string().min(1).max(200).describe('トピックのタイトル'),
+    content: z.string().min(1).max(10000).describe('トピックの内容'),
+});
+
+// AnalyzeTopicsResponseスキーマ
+export const AnalyzeTopicsResponseSchema = z.object({
+    data: z.array(TopicSegmentSchema).describe('分割されたトピックのリスト'),
+});
+
+// ConnectTopicsRequestスキーマ
+export const ConnectTopicsRequestSchema = z.object({
+    topics: z
+        .array(
+            z.object({
+                title: z.string().min(1).max(200).describe('トピックのタイトル'),
+                content: z.string().min(1).max(10000).describe('トピックの内容'),
+                relatedKnowledgeIds: z.array(z.string()).optional().describe('関連する既存ナレッジのIDリスト'),
+            })
+        )
+        .min(1)
+        .describe('接続するトピックのリスト'),
+});
+
 // レスポンススキーマ
 export const KnowledgeListResponseSchema = z.object({
     data: z.array(KnowledgeSchema),

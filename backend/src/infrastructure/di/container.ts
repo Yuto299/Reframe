@@ -1,3 +1,6 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import { existsSync } from 'node:fs';
 import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
 import { MockKnowledgeRepository } from '../repositories/MockKnowledgeRepository.js';
 import { GetAllKnowledgeUseCase } from '../../application/usecases/GetAllKnowledgeUseCase.js';
@@ -5,13 +8,31 @@ import { GetKnowledgeByIdUseCase } from '../../application/usecases/GetKnowledge
 import { SearchKnowledgeUseCase } from '../../application/usecases/SearchKnowledgeUseCase.js';
 import { CreateKnowledgeUseCase } from '../../application/usecases/CreateKnowledgeUseCase.js';
 import { ConnectKnowledgeUseCase } from '../../application/usecases/ConnectKnowledgeUseCase.js';
+import { SegmentTopicsUseCase } from '../../application/usecases/SegmentTopicsUseCase.js';
+import { SearchRelatedKnowledgeUseCase } from '../../application/usecases/SearchRelatedKnowledgeUseCase.js';
+import { VertexAIService } from '../services/VertexAIService.js';
+
+// .envファイルを読み込む
+// Dockerコンテナ内では /app/.env、ローカルでは ../.env を試す
+const envPaths = [
+    resolve(process.cwd(), '.env'), // Dockerコンテナ内
+    resolve(process.cwd(), '../.env'), // ローカル開発
+];
+
+for (const envPath of envPaths) {
+    if (existsSync(envPath)) {
+        config({ path: envPath });
+        break;
+    }
+}
 
 /**
  * DIコンテナの設定
  * テスト時にモックに差し替え可能にするため、ファクトリーパターンを使用
  */
 export interface ContainerConfig {
-    knowledgeRepository: KnowledgeRepository;
+    knowledgeRepository?: KnowledgeRepository;
+    vertexAIService?: VertexAIService;
 }
 
 /**
@@ -22,11 +43,19 @@ function createDefaultRepository(): KnowledgeRepository {
 }
 
 /**
+ * デフォルトのVertex AIサービスを生成
+ */
+function createDefaultVertexAIService(): VertexAIService {
+    return new VertexAIService();
+}
+
+/**
  * DIコンテナファクトリー
  * テスト時にカスタムリポジトリを注入可能
  */
 export function createContainer(config?: Partial<ContainerConfig>): Container {
     const repository = config?.knowledgeRepository ?? createDefaultRepository();
+    const vertexAIService = config?.vertexAIService ?? createDefaultVertexAIService();
 
     return {
         getAllKnowledgeUseCase: new GetAllKnowledgeUseCase(repository),
@@ -34,6 +63,8 @@ export function createContainer(config?: Partial<ContainerConfig>): Container {
         searchKnowledgeUseCase: new SearchKnowledgeUseCase(repository),
         createKnowledgeUseCase: new CreateKnowledgeUseCase(repository),
         connectKnowledgeUseCase: new ConnectKnowledgeUseCase(repository),
+        segmentTopicsUseCase: new SegmentTopicsUseCase(vertexAIService),
+        searchRelatedKnowledgeUseCase: new SearchRelatedKnowledgeUseCase(repository, vertexAIService),
     };
 }
 
@@ -46,6 +77,8 @@ export interface Container {
     searchKnowledgeUseCase: SearchKnowledgeUseCase;
     createKnowledgeUseCase: CreateKnowledgeUseCase;
     connectKnowledgeUseCase: ConnectKnowledgeUseCase;
+    segmentTopicsUseCase: SegmentTopicsUseCase;
+    searchRelatedKnowledgeUseCase: SearchRelatedKnowledgeUseCase;
 }
 
 /**

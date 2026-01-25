@@ -16,7 +16,8 @@
     "@google-cloud/vertexai": "^1.10.0",
     "@hono/zod-openapi": "^0.19.6",
     "@hono/swagger-ui": "^0.5.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^20",

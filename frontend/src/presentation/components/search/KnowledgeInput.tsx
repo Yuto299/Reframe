@@ -9,14 +9,27 @@ import { Loader2 } from 'lucide-react';
 interface KnowledgeInputProps {
     onSearch: (query: string) => void;
     isSearching: boolean;
+    onAnalyzeTopics?: (query: string) => void;
+    isAnalyzing?: boolean;
 }
 
-export default function KnowledgeInput({ onSearch, isSearching }: KnowledgeInputProps) {
+export default function KnowledgeInput({
+    onSearch,
+    isSearching,
+    onAnalyzeTopics,
+    isAnalyzing = false,
+}: KnowledgeInputProps) {
     const [query, setQuery] = useState('');
 
     const handleSubmit = () => {
         if (query.trim()) {
             onSearch(query);
+        }
+    };
+
+    const handleAnalyzeTopics = () => {
+        if (query.trim() && onAnalyzeTopics) {
+            onAnalyzeTopics(query);
         }
     };
 
@@ -45,10 +58,27 @@ export default function KnowledgeInput({ onSearch, isSearching }: KnowledgeInput
                         className="min-h-[120px] resize-none text-base border-border/50 bg-background/50 focus:bg-background transition-colors"
                         disabled={isSearching}
                     />
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                        {onAnalyzeTopics && (
+                            <Button
+                                onClick={handleAnalyzeTopics}
+                                disabled={isAnalyzing || isSearching || !query.trim()}
+                                variant="outline"
+                                className="w-full sm:w-auto"
+                            >
+                                {isAnalyzing ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Analyzing...
+                                    </>
+                                ) : (
+                                    'Analyze Topics'
+                                )}
+                            </Button>
+                        )}
                         <Button
                             onClick={handleSubmit}
-                            disabled={isSearching || !query.trim()}
+                            disabled={isSearching || isAnalyzing || !query.trim()}
                             className="w-full sm:w-auto"
                         >
                             {isSearching ? (

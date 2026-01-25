@@ -29,3 +29,11 @@ export interface SearchResult {
     knowledge: Knowledge;
     relevanceScore: number;
 }
+
+/**
+ * トピック分割結果
+ */
+export interface TopicSegment {
+    title: string;
+    content: string;
+}

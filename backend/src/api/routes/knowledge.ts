@@ -8,6 +8,9 @@ import {
     CreateKnowledgeInputSchema,
     SearchRequestSchema,
     ConnectRequestSchema,
+    AnalyzeTopicsRequestSchema,
+    AnalyzeTopicsResponseSchema,
+    ConnectTopicsRequestSchema,
     ErrorResponseSchema,
 } from '../schemas/knowledge.js';
 
@@ -284,6 +287,125 @@ app.openapi(connectRoute, async (c) => {
         const { id } = c.req.valid('param');
         const { targetIds } = c.req.valid('json');
         await container.connectKnowledgeUseCase.execute(id, targetIds);
+        return c.body(null, 204);
+    } catch (error) {
+        throw error;
+    }
+});
+
+// POST /api/knowledge/analyze-topics - トピック分割
+const analyzeTopicsRoute = createRoute({
+    method: 'post',
+    path: '/analyze-topics',
+    summary: 'トピック分割',
+    description: '入力テキストをVertex AIを使用して複数のトピックに分割します',
+    tags: ['Knowledge'],
+    request: {
+        body: {
+            content: {
+                'application/json': {
+                    schema: AnalyzeTopicsRequestSchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: '成功',
+            content: {
+                'application/json': {
+                    schema: AnalyzeTopicsResponseSchema,
+                },
+            },
+        },
+        400: {
+            description: 'バリデーションエラー',
+            content: {
+                'application/json': {
+                    schema: ErrorResponseSchema,
+                },
+            },
+        },
+        500: {
+            description: 'サーバーエラー',
+            content: {
+                'application/json': {
+                    schema: ErrorResponseSchema,
+                },
+            },
+        },
+    },
+});
+
+app.openapi(analyzeTopicsRoute, async (c) => {
+    try {
+        const { text } = c.req.valid('json');
+        const topics = await container.segmentTopicsUseCase.execute(text);
+        return c.json({ data: topics }, 200);
+    } catch (error) {
+        throw error;
+    }
+});
+
+// POST /api/knowledge/connect-topics - トピックをナレッジとして作成・接続
+const connectTopicsRoute = createRoute({
+    method: 'post',
+    path: '/connect-topics',
+    summary: 'トピック接続',
+    description: '選択されたトピックをナレッジとして作成し、関連ナレッジと接続します',
+    tags: ['Knowledge'],
+    request: {
+        body: {
+            content: {
+                'application/json': {
+                    schema: ConnectTopicsRequestSchema,
+                },
+            },
+        },
+    },
+    responses: {
+        204: {
+            description: '接続成功',
+        },
+        400: {
+            description: 'バリデーションエラー',
+            content: {
+                'application/json': {
+                    schema: ErrorResponseSchema,
+                },
+            },
+        },
+        500: {
+            description: 'サーバーエラー',
+            content: {
+                'application/json': {
+                    schema: ErrorResponseSchema,
+                },
+            },
+        },
+    },
+});
+
+app.openapi(connectTopicsRoute, async (c) => {
+    try {
+        const { topics } = c.req.valid('json');
+        
+        // 各トピックをナレッジとして作成
+        for (const topic of topics) {
+            const newKnowledge = await container.createKnowledgeUseCase.execute({
+                title: topic.title,
+                content: topic.content,
+            });
+
+            // 関連ナレッジがある場合、接続
+            if (topic.relatedKnowledgeIds && topic.relatedKnowledgeIds.length > 0) {
+                await container.connectKnowledgeUseCase.execute(
+                    newKnowledge.id,
+                    topic.relatedKnowledgeIds
+                );
+            }
+        }
+
         return c.body(null, 204);
     } catch (error) {
         throw error;
