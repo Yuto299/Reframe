@@ -1,5 +1,5 @@
 import { apiClient, ApiError } from './client';
-import { Knowledge, CreateKnowledgeInput, SearchResult } from '@/types/knowledge';
+import { Knowledge, CreateKnowledgeInput, SearchResult, TopicSegment } from '@/types/knowledge';
 
 export { ApiError };
 
@@ -37,5 +37,19 @@ export const knowledgeApi = {
      */
     async connect(sourceId: string, targetIds: string[]): Promise<void> {
         await apiClient.post<void>(`/api/knowledge/${sourceId}/connect`, { targetIds });
+    },
+
+    /**
+     * テキストをトピックに分割
+     */
+    async analyzeTopics(text: string): Promise<TopicSegment[]> {
+        return apiClient.post<TopicSegment[]>('/api/knowledge/analyze-topics', { text });
+    },
+
+    /**
+     * トピックをナレッジとして作成・接続
+     */
+    async connectTopics(topics: Array<{ title: string; content: string; relatedKnowledgeIds?: string[] }>): Promise<void> {
+        await apiClient.post<void>('/api/knowledge/connect-topics', { topics });
     },
 };

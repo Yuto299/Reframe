@@ -9,11 +9,20 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - PORT=8080
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION:-asia-northeast1}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - DATABASE_URL=postgresql://postgres:password@db:5432/reframe
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/service-account-key.json
     volumes:
       - ./backend/src:/app/src
+      - ./.env:/app/.env:ro
+      - ./service-account-key.json:/app/service-account-key.json:ro
     command: npm run dev
 
   frontend:

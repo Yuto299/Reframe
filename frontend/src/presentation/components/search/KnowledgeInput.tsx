@@ -7,23 +7,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react';
 
 interface KnowledgeInputProps {
-    onSearch: (query: string) => void;
-    isSearching: boolean;
+    onAnalyzeTopics?: (query: string) => void;
+    isAnalyzing?: boolean;
 }
 
-export default function KnowledgeInput({ onSearch, isSearching }: KnowledgeInputProps) {
+export default function KnowledgeInput({
+    onAnalyzeTopics,
+    isAnalyzing = false,
+}: KnowledgeInputProps) {
     const [query, setQuery] = useState('');
 
-    const handleSubmit = () => {
-        if (query.trim()) {
-            onSearch(query);
+    const handleAnalyzeTopics = () => {
+        if (query.trim() && onAnalyzeTopics) {
+            onAnalyzeTopics(query);
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            handleSubmit();
+            handleAnalyzeTopics();
         }
     };
 
@@ -41,25 +44,27 @@ export default function KnowledgeInput({ onSearch, isSearching }: KnowledgeInput
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="What did you learn today? (Cmd + Enter to search)"
+                        placeholder="What did you learn today? (Cmd + Enter to analyze)"
                         className="min-h-[120px] resize-none text-base border-border/50 bg-background/50 focus:bg-background transition-colors"
-                        disabled={isSearching}
+                        disabled={isAnalyzing}
                     />
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={isSearching || !query.trim()}
-                            className="w-full sm:w-auto"
-                        >
-                            {isSearching ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Searching...
-                                </>
-                            ) : (
-                                'Find Connections'
-                            )}
-                        </Button>
+                    <div className="flex justify-end gap-2">
+                        {onAnalyzeTopics && (
+                            <Button
+                                onClick={handleAnalyzeTopics}
+                                disabled={isAnalyzing || !query.trim()}
+                                className="w-full sm:w-auto"
+                            >
+                                {isAnalyzing ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Analyzing...
+                                    </>
+                                ) : (
+                                    'Analyze Topics'
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>

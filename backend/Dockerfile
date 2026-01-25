@@ -40,6 +40,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/infrastructure/database/schema.sql ./dist/infrastructure/database/schema.sql
 
 ENV NODE_ENV=production
 ENV PORT=8080

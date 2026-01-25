@@ -36,6 +36,17 @@ async function handleResponse<T>(response: Response): Promise<T> {
         );
     }
 
+    // 204 No Contentの場合は空のレスポンス
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    // Content-Typeがapplication/jsonでない場合も空を返す
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        return undefined as T;
+    }
+
     const data = await response.json();
     return data.data as T;
 }
