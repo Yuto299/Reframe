@@ -1,4 +1,5 @@
-import { KnowledgeRepository, Knowledge } from '@reframe/shared';
+import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
+import { Knowledge } from '@/domain/models/Knowledge';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class GetAllKnowledgeUseCase {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Knowledge } from '@reframe/shared';
+import { Knowledge } from '@/types/knowledge';
 import { knowledgeApi } from '@/lib/api/knowledge';
 import { ApiError } from '@/lib/api/client';
 import KnowledgeGraph from '@/presentation/components/graph/KnowledgeGraph';

@@ -12,7 +12,7 @@ import ReactFlow, {
     MiniMap,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Knowledge } from '@reframe/shared';
+import { Knowledge } from '@/types/knowledge';
 
 interface KnowledgeGraphProps {
     knowledgeList: Knowledge[];

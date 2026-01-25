@@ -1,5 +1,5 @@
 import { apiClient, ApiError } from './client';
-import { Knowledge, CreateKnowledgeInput, SearchResult } from '@reframe/shared';
+import { Knowledge, CreateKnowledgeInput, SearchResult } from '@/types/knowledge';
 
 export { ApiError };
 

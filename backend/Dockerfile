@@ -10,7 +10,6 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package*.json ./
-COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/
 
 RUN npm ci
@@ -20,10 +19,9 @@ RUN npm ci
 # ==================================
 FROM deps AS development
 
-COPY shared ./shared
 COPY backend ./backend
 
-WORKDIR /app/backend
+WORKDIR /app
 
 ENV NODE_ENV=development
 ENV PORT=8080
@@ -34,7 +32,6 @@ EXPOSE 8080
 # ==================================
 FROM deps AS builder
 
-COPY shared ./shared
 COPY backend ./backend
 
 WORKDIR /app/backend
@@ -46,12 +43,10 @@ RUN npm run build
 FROM base AS production
 
 COPY package*.json ./
-COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/
 
-RUN npm ci --omit=dev --workspace=@reframe/shared --workspace=@reframe/backend
+RUN npm ci --omit=dev --workspace=@reframe/backend
 
-COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/backend/dist ./backend/dist
 
 WORKDIR /app/backend

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SearchResult, Knowledge, KnowledgeTitle } from '@reframe/shared';
+import { SearchResult, Knowledge } from '@/types/knowledge';
 import { knowledgeApi, ApiError } from '@/lib/api/knowledge';
 import KnowledgeInput from '@/presentation/components/search/KnowledgeInput';
 import SearchResults from '@/presentation/components/search/SearchResults';
@@ -40,11 +40,11 @@ export default function SearchPage() {
         setIsConnecting(true);
         setError(null);
         try {
-            // タイトルの生成はドメインロジックを使用
-            const title = KnowledgeTitle.create(currentQuery);
+            // タイトルの生成（簡易版）
+            const title = currentQuery.slice(0, 200).trim();
             
             const newKnowledge = await knowledgeApi.create({
-                title: title.getFullTitle(),
+                title: title || 'Untitled',
                 content: currentQuery,
             });
             await knowledgeApi.connect(newKnowledge.id, selectedIds);

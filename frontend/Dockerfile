@@ -10,7 +10,6 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package*.json ./
-COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
 RUN npm ci
@@ -20,10 +19,9 @@ RUN npm ci
 # ==================================
 FROM deps AS development
 
-COPY shared ./shared
 COPY frontend ./frontend
 
-WORKDIR /app/frontend
+WORKDIR /app
 
 ENV NODE_ENV=development
 ENV PORT=3000
@@ -34,7 +32,6 @@ EXPOSE 3000
 # ==================================
 FROM deps AS builder
 
-COPY shared ./shared
 COPY frontend ./frontend
 
 WORKDIR /app/frontend
@@ -46,10 +43,9 @@ RUN npm run build
 FROM base AS production
 
 COPY package*.json ./
-COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
-RUN npm ci --omit=dev --workspace=@reframe/shared --workspace=@reframe/frontend
+RUN npm ci --omit=dev --workspace=@reframe/frontend
 
 COPY --from=builder /app/frontend/.next/standalone ./
 COPY --from=builder /app/frontend/.next/static ./frontend/.next/static

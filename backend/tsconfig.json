@@ -15,9 +15,7 @@
     "sourceMap": true,
     "types": ["node"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@reframe/shared": ["../shared/src"],
-      "@reframe/shared/*": ["../shared/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
