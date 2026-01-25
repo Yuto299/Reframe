@@ -16,21 +16,7 @@ COPY frontend/package.json ./frontend/
 RUN npm ci
 
 # ==================================
-# Development stage - 開発環境
-# ==================================
-FROM deps AS development
-
-COPY shared ./shared
-COPY frontend ./frontend
-
-WORKDIR /app/frontend
-
-ENV NODE_ENV=development
-ENV PORT=3000
-EXPOSE 3000
-
-# ==================================
-# Builder stage - 本番ビルド用
+# Builder stage - 静的エクスポート用ビルド
 # ==================================
 FROM deps AS builder
 
@@ -38,28 +24,21 @@ COPY shared ./shared
 COPY frontend ./frontend
 
 WORKDIR /app/frontend
-RUN npm run build
+
+# Next.js static export
+RUN npm run build && npm run export
 
 # ==================================
-# Production stage - 本番環境
+# Production stage - Nginx 配信
 # ==================================
-FROM base AS production
+FROM nginx:alpine AS production
 
-COPY package*.json ./
-COPY shared/package.json ./shared/
-COPY frontend/package.json ./frontend/
+# Nginx default config を置き換える場合はここで COPY
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN npm ci --omit=dev --workspace=@reframe/shared --workspace=@reframe/frontend
+# Next.js export 出力を Nginx の公開ディレクトリへ
+COPY --from=builder /app/frontend/out /usr/share/nginx/html
 
-COPY --from=builder /app/frontend/.next/standalone ./
-COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
-COPY --from=builder /app/frontend/public ./frontend/public
+EXPOSE 80
 
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-EXPOSE 3000
-
-CMD ["node", "frontend/server.js"]
+CMD ["nginx", "-g", "daemon off;"]
