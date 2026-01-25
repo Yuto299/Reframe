@@ -1,51 +1,32 @@
-# ==================================
-# Development stage - 開発環境
-# ==================================
-FROM node:22-alpine AS development
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-ENV NODE_ENV=development
-ENV PORT=3000
-EXPOSE 3000
-
-CMD ["npm", "run", "dev"]
-
-# ==================================
-# Builder stage - 本番ビルド用
-# ==================================
+# Build stage
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Copy frontend package files
 COPY package*.json ./
+COPY tsconfig.json ./
+COPY next.config.ts ./
+
+# Install dependencies
 RUN npm install
 
-COPY . .
+# Build frontend - Next.js static export
+COPY src ./src
+COPY public ./public
 RUN npm run build
 
-# ==================================
-# Production stage - 本番環境
-# ==================================
-FROM node:22-alpine AS production
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install --omit=dev
-
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+# Production stage - Nginx for static file serving
+FROM nginx:alpine AS production
 
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy static files from builder
+COPY --from=builder /app/out /usr/share/nginx/html
+
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["nginx", "-g", "daemon off;"]

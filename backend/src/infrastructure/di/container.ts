@@ -1,4 +1,4 @@
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
 import { MockKnowledgeRepository } from '../repositories/MockKnowledgeRepository.js';
 import { GetAllKnowledgeUseCase } from '../../application/usecases/GetAllKnowledgeUseCase.js';
 import { GetKnowledgeByIdUseCase } from '../../application/usecases/GetKnowledgeByIdUseCase.js';

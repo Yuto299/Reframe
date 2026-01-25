@@ -3,7 +3,7 @@ import { Context } from 'hono';
 import { cors } from 'hono/cors';
 import { swaggerUI } from '@hono/swagger-ui';
 import { knowledgeRoutes } from './routes/knowledge.js';
-import { DomainError } from '@/domain/errors/DomainError';
+import { DomainError } from '../domain/errors/DomainError.js';
 import { ApplicationError } from '../application/errors/ApplicationError.js';
 
 export function createServer(): OpenAPIHono {

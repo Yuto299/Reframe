@@ -24,7 +24,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 RUN npm run build
@@ -42,7 +42,6 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 ENV NODE_ENV=production
-ENV PORT=8080
 EXPOSE 8080
 
-CMD ["node", "dist/src/index.js"]
+CMD ["node", "dist/index.js"]

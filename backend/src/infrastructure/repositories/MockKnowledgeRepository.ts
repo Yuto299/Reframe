@@ -1,5 +1,5 @@
-import { Knowledge, CreateKnowledgeInput, SearchResult } from '@/domain/models/Knowledge';
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
+import { Knowledge, CreateKnowledgeInput, SearchResult } from '../../domain/models/Knowledge.js';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
 
 // Mock data storage
 let mockKnowledgeData: Knowledge[] = [

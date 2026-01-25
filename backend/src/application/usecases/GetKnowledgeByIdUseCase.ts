@@ -1,6 +1,6 @@
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
-import { Knowledge } from '@/domain/models/Knowledge';
-import { KnowledgeNotFoundError, DomainError } from '@/domain/errors/DomainError';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
+import { Knowledge } from '../../domain/models/Knowledge.js';
+import { KnowledgeNotFoundError, DomainError } from '../../domain/errors/DomainError.js';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class GetKnowledgeByIdUseCase {

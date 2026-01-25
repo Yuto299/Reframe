@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { container } from '../../infrastructure/di/container.js';
-import { CreateKnowledgeInput } from '@/domain/models/Knowledge';
+import { CreateKnowledgeInput } from '../../domain/models/Knowledge.js';
 import {
     KnowledgeListResponseSchema,
     KnowledgeResponseSchema,

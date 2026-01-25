@@ -11,11 +11,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "hono": "^4.0.0",
-    "@hono/node-server": "^1.8.0",
     "@google-cloud/vertexai": "^1.10.0",
-    "@hono/zod-openapi": "^0.19.6",
+    "@hono/node-server": "^1.8.0",
     "@hono/swagger-ui": "^0.5.3",
+    "@hono/zod-openapi": "^0.19.6",
+    "hono": "^4.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

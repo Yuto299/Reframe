@@ -1,4 +1,4 @@
-import { Knowledge, CreateKnowledgeInput, SearchResult } from '../models/Knowledge';
+import { Knowledge, CreateKnowledgeInput, SearchResult } from '../models/Knowledge.js';
 
 // Repository Interface (Port)
 export interface KnowledgeRepository {
