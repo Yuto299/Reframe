@@ -39,13 +39,13 @@
 
 ---
 
-### Phase 2: 関連ナレッジ検索
+### Phase 2: 関連ナレッジ検索 ✅ 完了
 **目標**: Embeddings APIを使用して既存ナレッジとの関連性を検索
 
 #### バックエンド
 1. ✅ Embeddings APIサービスの実装（Infrastructure層）
    - `backend/src/infrastructure/services/VertexAIService.ts`に追加
-   - Embeddings APIクライアント（textembedding-gecko@003）
+   - Embeddings APIクライアント（text-embedding-004）
 
 2. ✅ 関連ナレッジ検索ユースケースの実装（Application層）
    - `backend/src/application/usecases/SearchRelatedKnowledgeUseCase.ts`
@@ -55,7 +55,13 @@
    - 各トピックに対して関連ナレッジを検索
    - レスポンスに`relatedKnowledge`を追加
 
-4. ⏳ 既存ナレッジの埋め込みベクトル生成・保存機能（将来の最適化用）
+#### フロントエンド
+4. ✅ 関連ナレッジ表示UIの実装
+   - 各トピックカードに関連ナレッジを表示
+   - 関連度スコア（0-100%）を表示
+   - High Matchバッジ（スコア80以上）を表示
+
+5. ⏳ 既存ナレッジの埋め込みベクトル生成・保存機能（将来の最適化用）
    - 現時点では、検索時に都度生成（パフォーマンス最適化は後回し）
 
 ---

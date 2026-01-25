@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
     Node,
     Edge,
@@ -10,6 +10,8 @@ import ReactFlow, {
     useEdgesState,
     BackgroundVariant,
     MiniMap,
+    useReactFlow,
+    ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Knowledge } from '@/types/knowledge';
@@ -20,16 +22,22 @@ interface KnowledgeGraphProps {
     showDate: boolean;
 }
 
-export default function KnowledgeGraph({
+function GraphContent({
     knowledgeList,
     onNodeClick,
     showDate,
 }: KnowledgeGraphProps) {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const { fitView } = useReactFlow();
+    const fitViewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        if (knowledgeList.length === 0) return;
+        if (knowledgeList.length === 0) {
+            setNodes([]);
+            setEdges([]);
+            return;
+        }
 
         // Layout configuration
         const newNodes: Node[] = knowledgeList.map((knowledge, index) => {
@@ -95,7 +103,21 @@ export default function KnowledgeGraph({
 
         setNodes(newNodes);
         setEdges(newEdges);
-    }, [knowledgeList, showDate, setNodes, setEdges]);
+
+        // ノード更新後にfitViewを実行（少し遅延させて確実にレンダリング後に実行）
+        if (fitViewTimeoutRef.current) {
+            clearTimeout(fitViewTimeoutRef.current);
+        }
+        fitViewTimeoutRef.current = setTimeout(() => {
+            fitView({ padding: 0.2, duration: 400 });
+        }, 100);
+
+        return () => {
+            if (fitViewTimeoutRef.current) {
+                clearTimeout(fitViewTimeoutRef.current);
+            }
+        };
+    }, [knowledgeList, showDate, setNodes, setEdges, fitView]);
 
     const onNodeClickInternal = useCallback((_event: unknown, node: Node) => {
         const k = knowledgeList.find(item => item.id === node.id);
@@ -112,14 +134,13 @@ export default function KnowledgeGraph({
     }
 
     return (
-        <div className="h-full w-full">
+        <>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onNodeClick={onNodeClickInternal}
-                fitView
                 minZoom={0.5}
                 maxZoom={2}
             >
@@ -135,6 +156,16 @@ export default function KnowledgeGraph({
                     }}
                 />
             </ReactFlow>
+        </>
+    );
+}
+
+export default function KnowledgeGraph(props: KnowledgeGraphProps) {
+    return (
+        <div className="h-full w-full">
+            <ReactFlowProvider>
+                <GraphContent {...props} />
+            </ReactFlowProvider>
         </div>
     );
 }

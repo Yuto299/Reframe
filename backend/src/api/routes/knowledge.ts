@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { container } from '../../infrastructure/di/container.js';
+import { getContainer } from '../../infrastructure/di/container.js';
 import { CreateKnowledgeInput } from '@/domain/models/Knowledge';
 import {
     KnowledgeListResponseSchema,
@@ -45,6 +45,7 @@ const getAllRoute = createRoute({
 
 app.openapi(getAllRoute, async (c) => {
     try {
+        const container = getContainer();
         const knowledge = await container.getAllKnowledgeUseCase.execute();
         // DateをISO文字列に変換、readonly配列を通常の配列に変換
         const serialized = knowledge.map((k) => ({
@@ -101,6 +102,7 @@ const getByIdRoute = createRoute({
 app.openapi(getByIdRoute, async (c) => {
     try {
         const { id } = c.req.valid('param');
+        const container = getContainer();
         const knowledge = await container.getKnowledgeByIdUseCase.execute(id);
         return c.json({
             data: {
@@ -161,6 +163,7 @@ const searchRoute = createRoute({
 app.openapi(searchRoute, async (c) => {
     try {
         const { query } = c.req.valid('json');
+        const container = getContainer();
         const results = await container.searchKnowledgeUseCase.execute(query);
         // DateをISO文字列に変換、readonly配列を通常の配列に変換
         const serialized = results.map((r) => ({
@@ -224,6 +227,7 @@ const createKnowledgeRoute = createRoute({
 app.openapi(createKnowledgeRoute, async (c) => {
     try {
         const input: CreateKnowledgeInput = c.req.valid('json');
+        const container = getContainer();
         const knowledge = await container.createKnowledgeUseCase.execute(input);
         return c.json(
             {
@@ -286,6 +290,7 @@ app.openapi(connectRoute, async (c) => {
     try {
         const { id } = c.req.valid('param');
         const { targetIds } = c.req.valid('json');
+        const container = getContainer();
         await container.connectKnowledgeUseCase.execute(id, targetIds);
         return c.body(null, 204);
     } catch (error) {
@@ -343,6 +348,7 @@ app.openapi(analyzeTopicsRoute, async (c) => {
         
         console.log('Analyzing topics for text:', text.substring(0, 100) + '...');
         
+        const container = getContainer();
         const topics = await container.segmentTopicsUseCase.execute(text);
         
         console.log(`Segmented into ${topics.length} topics`);
@@ -439,11 +445,27 @@ app.openapi(connectTopicsRoute, async (c) => {
     try {
         const { topics } = c.req.valid('json');
         
+        const container = getContainer();
+        
         // 各トピックをナレッジとして作成
+        const createdKnowledgeList: Array<{ id: string; title: string; content: string; embedding: number[] }> = [];
+        
         for (const topic of topics) {
             const newKnowledge = await container.createKnowledgeUseCase.execute({
                 title: topic.title,
                 content: topic.content,
+            });
+
+            // 埋め込みベクトルを生成（トピック同士の類似度計算用）
+            const embedding = await container.vertexAIService.generateEmbedding(
+                `${topic.title}\n${topic.content}`
+            );
+            
+            createdKnowledgeList.push({
+                id: newKnowledge.id,
+                title: topic.title,
+                content: topic.content,
+                embedding,
             });
 
             // 関連ナレッジがある場合、接続
@@ -452,6 +474,31 @@ app.openapi(connectTopicsRoute, async (c) => {
                     newKnowledge.id,
                     topic.relatedKnowledgeIds
                 );
+            }
+        }
+
+        // トピック同士の類似度を計算して接続
+        // 類似度閾値: 0.7（70%以上）
+        const similarityThreshold = 0.7;
+        
+        for (let i = 0; i < createdKnowledgeList.length; i++) {
+            for (let j = i + 1; j < createdKnowledgeList.length; j++) {
+                const knowledge1 = createdKnowledgeList[i];
+                const knowledge2 = createdKnowledgeList[j];
+                
+                // コサイン類似度を計算
+                const similarity = container.vertexAIService.cosineSimilarity(
+                    knowledge1.embedding,
+                    knowledge2.embedding
+                );
+                
+                // 閾値以上の場合は接続（無理に結びつけない）
+                if (similarity >= similarityThreshold) {
+                    await container.connectKnowledgeUseCase.execute(
+                        knowledge1.id,
+                        [knowledge2.id]
+                    );
+                }
             }
         }
 

@@ -61,18 +61,25 @@ export default function GraphPage() {
                                 {error}
                             </div>
                         )}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <div className="text-2xl font-bold">{knowledgeList.length}</div>
-                                <div className="text-xs text-muted-foreground">Nodes</div>
+                        {isLoading ? (
+                            <div className="text-center py-4">
+                                <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2 text-muted-foreground" />
+                                <div className="text-xs text-muted-foreground">Loading...</div>
                             </div>
-                            <div>
-                                <div className="text-2xl font-bold">
-                                    {Math.floor(knowledgeList.reduce((acc, k) => acc + k.connections.length, 0) / 2)}
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div className="text-2xl font-bold">{knowledgeList.length}</div>
+                                    <div className="text-xs text-muted-foreground">Nodes</div>
                                 </div>
-                                <div className="text-xs text-muted-foreground">Edges</div>
+                                <div>
+                                    <div className="text-2xl font-bold">
+                                        {Math.floor(knowledgeList.reduce((acc, k) => acc + k.connections.length, 0) / 2)}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">Edges</div>
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <Button
                             variant="outline"
                             size="sm"
