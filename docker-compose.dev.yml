@@ -6,23 +6,25 @@
 services:
   backend:
     build:
+      context: ./backend
+      dockerfile: Dockerfile
       target: development
     environment:
       - NODE_ENV=development
       - PORT=8080
     volumes:
-      - ./backend/src:/app/backend/src
-      - ./shared/src:/app/shared/src
+      - ./backend/src:/app/src
     command: npm run dev
 
   frontend:
     build:
+      context: ./frontend
+      dockerfile: Dockerfile
       target: development
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8080
     volumes:
-      - ./frontend/src:/app/frontend/src
-      - ./frontend/public:/app/frontend/public
-      - ./shared/src:/app/shared/src
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     command: npm run dev

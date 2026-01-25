@@ -1,4 +1,5 @@
-import { Knowledge, CreateKnowledgeInput, SearchResult, KnowledgeRepository } from '@reframe/shared';
+import { Knowledge, CreateKnowledgeInput, SearchResult } from '@/domain/models/Knowledge';
+import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
 
 // Mock data storage
 let mockKnowledgeData: Knowledge[] = [

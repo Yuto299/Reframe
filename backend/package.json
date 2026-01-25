@@ -1,8 +1,9 @@
 {
-  "name": "@reframe/backend",
+  "name": "reframe-backend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Reframe Backend API - Cloud Run deployment",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -10,7 +11,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@reframe/shared": "*",
     "hono": "^4.0.0",
     "@hono/node-server": "^1.8.0",
     "@google-cloud/vertexai": "^1.10.0"

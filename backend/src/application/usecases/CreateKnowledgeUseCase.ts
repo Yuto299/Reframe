@@ -1,4 +1,6 @@
-import { KnowledgeRepository, Knowledge, CreateKnowledgeInput, KnowledgeFactory, DomainError } from '@reframe/shared';
+import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
+import { Knowledge, CreateKnowledgeInput, KnowledgeFactory } from '@/domain/models/Knowledge';
+import { DomainError } from '@/domain/errors/DomainError';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class CreateKnowledgeUseCase {

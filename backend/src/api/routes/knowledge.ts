@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono';
 import { container } from '../../infrastructure/di/container.js';
-import { CreateKnowledgeInput } from '@reframe/shared';
+import { CreateKnowledgeInput } from '@/domain/models/Knowledge';
 
 const router = new Hono();
 

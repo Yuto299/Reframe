@@ -2,151 +2,64 @@
 
 知識をつなげて可視化するアプリケーション。
 
-## 📚 アーキテクチャ
+## プロジェクト構成
 
-このプロジェクトは**クリーンアーキテクチャ（ヘキサゴナルアーキテクチャ）**の原則に基づいて設計されています。
+このプロジェクトは2つの独立したプロジェクトで構成されています：
 
-詳細は [アーキテクチャドキュメント](./docs/ARCHITECTURE.md) を参照してください。
+- **frontend/**: Next.jsアプリケーション（Firebase Hostingでデプロイ）
+- **backend/**: Hono APIサーバー（Cloud Runでデプロイ）
 
-## 🏗️ プロジェクト構成
+## 開発環境
 
-このプロジェクトはモノレポ構成で、以下の3つのパッケージで構成されています：
-
-- **frontend**: Next.jsアプリケーション（フロントエンド）
-- **backend**: Hono APIサーバー（バックエンド）
-- **shared**: 共有コード（ドメイン層）
-
-## 🚀 セットアップ
-
-### 依存関係のインストール
+### ローカル開発（Docker Compose使用）
 
 ```bash
-npm install
-```
-
-### ローカル開発
-
-#### 方法1: Docker Composeを使用（推奨）
-
-```bash
+# 開発環境を起動
 npm run docker:dev
+
+# または
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 - フロントエンド: http://localhost:3000
 - バックエンド: http://localhost:8080
 - PostgreSQL: localhost:5432
 
-#### 方法2: npm workspacesを使用
+### 個別に開発
+
+#### Frontend
 
 ```bash
-# フロントエンド（別ターミナル）
-npm run dev:frontend
-
-# バックエンド（別ターミナル）
-npm run dev:backend
+cd frontend
+npm install
+npm run dev
 ```
 
-### ビルド
+#### Backend
 
 ```bash
-# すべてのパッケージをビルド
+cd backend
+npm install
+npm run dev
+```
+
+## デプロイ
+
+### Frontend (Firebase Hosting)
+
+```bash
+cd frontend
 npm run build
-
-# 個別にビルド
-npm run build:frontend
-npm run build:backend
+firebase deploy --only hosting
 ```
 
-## 🐳 Docker
-
-Docker Composeを使用して開発環境・本番環境を構築できます。
-
-### npm scripts（推奨）
-
-| コマンド | 説明 |
-|----------|------|
-| `npm run docker:dev` | 開発環境を起動 |
-| `npm run docker:dev:build` | 開発環境をビルドして起動 |
-| `npm run docker:dev:down` | 開発環境を停止 |
-| `npm run docker:prod` | 本番環境を起動（バックグラウンド） |
-| `npm run docker:prod:build` | 本番環境をビルドして起動 |
-| `npm run docker:prod:down` | 本番環境を停止 |
+### Backend (Cloud Run)
 
 ```bash
-# 開発環境の起動
-npm run docker:dev
-
-# コードを変更した後、再ビルドして起動
-npm run docker:dev:build
-
-# 停止
-npm run docker:dev:down
+cd backend
+docker build -t gcr.io/YOUR_PROJECT_ID/reframe-backend .
+docker push gcr.io/YOUR_PROJECT_ID/reframe-backend
+gcloud run deploy reframe-backend --image gcr.io/YOUR_PROJECT_ID/reframe-backend --region asia-northeast1
 ```
 
-### Docker Compose直接実行
-
-```bash
-# 開発環境
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-
-# 本番環境
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-### 個別イメージのビルド
-
-```bash
-# バックエンド（本番）
-docker build --target production -f backend/Dockerfile -t reframe-backend .
-
-# バックエンド（開発）
-docker build --target development -f backend/Dockerfile -t reframe-backend-dev .
-
-# フロントエンド（本番）
-docker build --target production -f frontend/Dockerfile -t reframe-frontend .
-```
-
-## ☁️ Cloud Runへのデプロイ
-
-### バックエンドのデプロイ
-
-```bash
-gcloud run deploy backend-api \
-  --source ./backend \
-  --platform managed \
-  --region asia-northeast1 \
-  --port 8080
-```
-
-### フロントエンドのデプロイ
-
-```bash
-# バックエンドのURLを取得
-BACKEND_URL=$(gcloud run services describe backend-api --region asia-northeast1 --format 'value(status.url)')
-
-# フロントエンドをデプロイ（環境変数にバックエンドURLを設定）
-gcloud run deploy frontend-app \
-  --source ./frontend \
-  --platform managed \
-  --region asia-northeast1 \
-  --port 3000 \
-  --set-env-vars NEXT_PUBLIC_API_URL=$BACKEND_URL
-```
-
-## 📚 ドキュメント
-
-プロジェクトの詳細なドキュメントは `docs/` ディレクトリにあります：
-
-- [要件定義書](./docs/REQUIREMENTS.md) - プロジェクトの要件と仕様
-- [機能仕様書](./docs/FEATURES.md) - 各機能の詳細仕様
-- [API仕様書](./docs/API.md) - RESTful APIの詳細仕様
-- [アーキテクチャドキュメント](./docs/ARCHITECTURE.md) - システムアーキテクチャの説明
-- [開発ガイドライン](./docs/DEVELOPMENT.md) - 開発環境のセットアップとコーディング規約
-- [デプロイガイド](./docs/DEPLOYMENT.md) - GCPへのデプロイ手順
-
-## 📖 参考資料
-
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
-- [Next.js App Router](https://nextjs.org/docs/app)
-- [Google Cloud Run](https://cloud.google.com/run/docs)
+詳細は各プロジェクトのREADMEを参照してください。

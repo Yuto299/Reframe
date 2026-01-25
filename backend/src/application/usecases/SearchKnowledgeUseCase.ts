@@ -1,4 +1,5 @@
-import { KnowledgeRepository, SearchResult } from '@reframe/shared';
+import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
+import { SearchResult } from '@/domain/models/Knowledge';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class SearchKnowledgeUseCase {

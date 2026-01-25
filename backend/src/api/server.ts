@@ -1,7 +1,7 @@
 import { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
 import { knowledgeRoutes } from './routes/knowledge.js';
-import { DomainError } from '@reframe/shared';
+import { DomainError } from '@/domain/errors/DomainError';
 import { ApplicationError } from '../application/errors/ApplicationError.js';
 
 export function createServer(): Hono {

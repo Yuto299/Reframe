@@ -1,6 +1,5 @@
 node_modules
 npm-debug.log
-.next
 dist
 .env
 .env.local
@@ -8,3 +7,4 @@ dist
 *.log
 .git
 .gitignore
+*.md
