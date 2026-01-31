@@ -1,5 +1,5 @@
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
-import { Knowledge } from '@/domain/models/Knowledge';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
+import { Knowledge } from '../../domain/models/Knowledge.js';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class GetAllKnowledgeUseCase {

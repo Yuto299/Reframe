@@ -1,4 +1,4 @@
-import { VertexAIService, TopicSegment } from '@/infrastructure/services/VertexAIService.js';
+import { VertexAIService, TopicSegment } from '../../infrastructure/services/VertexAIService.js';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 /**

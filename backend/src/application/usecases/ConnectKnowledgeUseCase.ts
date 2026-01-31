@@ -1,5 +1,5 @@
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
-import { ConnectionValidationError, DomainError } from '@/domain/errors/DomainError';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
+import { ConnectionValidationError, DomainError } from '../../domain/errors/DomainError.js';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 export class ConnectKnowledgeUseCase {

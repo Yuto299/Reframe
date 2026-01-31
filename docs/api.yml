@@ -1,0 +1,455 @@
+openapi: 3.0.0
+info:
+  title: Reframe API
+  description: Reframe Knowledge Management API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+  - url: https://api.reframe.example.com
+    description: 本番環境
+
+tags:
+  - name: Health
+    description: ヘルスチェック
+  - name: Knowledge
+    description: ナレッジ管理
+
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      description: APIの稼働状態を確認します
+      tags:
+        - Health
+      responses:
+        '200':
+          description: 正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/knowledge:
+    get:
+      summary: 全ナレッジ取得
+      description: 登録されているすべてのナレッジを取得します
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Knowledge'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: ナレッジ作成
+      description: 新しいナレッジを作成します
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeInput'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Knowledge'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/{id}:
+    get:
+      summary: IDでナレッジ取得
+      description: 指定されたIDのナレッジを取得します
+      tags:
+        - Knowledge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ナレッジのID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Knowledge'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/search:
+    post:
+      summary: ナレッジ検索
+      description: |
+        キーワードでナレッジを検索します
+        
+        検索アルゴリズム:
+        1. タイトルに完全一致: +10点
+        2. コンテンツに完全一致: +5点
+        3. タイトルに単語一致: +3点/単語
+        4. コンテンツに単語一致: +1点/単語
+        5. スコアが0より大きいもののみ返却
+        6. スコアの降順でソート
+        7. 最大10件まで返却
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: 検索キーワード
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/{id}/connect:
+    post:
+      summary: ナレッジ接続
+      description: 指定されたナレッジに他のナレッジを接続します
+      tags:
+        - Knowledge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ナレッジのID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetIds
+              properties:
+                targetIds:
+                  type: array
+                  items:
+                    type: string
+                  description: 接続先ナレッジのIDリスト
+      responses:
+        '204':
+          description: 接続成功
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/{id}/related:
+    get:
+      summary: 関連ナレッジ検索
+      description: 指定されたナレッジに関連するナレッジを検索します
+      tags:
+        - Knowledge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ナレッジのID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/segment-topics:
+    post:
+      summary: トピック分割
+      description: 長文のコンテンツをトピックごとに分割します
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: 分割するコンテンツ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Topic'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/knowledge/connect-topics:
+    post:
+      summary: トピック接続
+      description: 分割されたトピックをナレッジとして登録し、関連性に基づいて接続します
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topics
+              properties:
+                topics:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TopicInput'
+                  description: 登録するトピックのリスト
+      responses:
+        '204':
+          description: 登録・接続成功
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Knowledge:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - embedding
+        - connections
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: ナレッジのID
+        title:
+          type: string
+          description: ナレッジのタイトル
+        content:
+          type: string
+          description: ナレッジの内容
+        embedding:
+          type: array
+          items:
+            type: number
+          description: 埋め込みベクトル
+        connections:
+          type: array
+          items:
+            type: string
+          description: 接続されているナレッジのIDリスト
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+
+    CreateKnowledgeInput:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: ナレッジのタイトル
+        content:
+          type: string
+          description: ナレッジの内容
+
+    SearchResult:
+      type: object
+      required:
+        - knowledge
+        - relevanceScore
+      properties:
+        knowledge:
+          $ref: '#/components/schemas/Knowledge'
+        relevanceScore:
+          type: number
+          format: float
+          description: 関連性スコア (0-1)
+
+    Topic:
+      type: object
+      required:
+        - title
+        - content
+        - relatedKnowledgeIds
+      properties:
+        title:
+          type: string
+          description: トピックのタイトル
+        content:
+          type: string
+          description: トピックの内容
+        relatedKnowledgeIds:
+          type: array
+          items:
+            type: string
+          description: 関連するナレッジのIDリスト
+
+    TopicInput:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: トピックのタイトル
+        content:
+          type: string
+          description: トピックの内容
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: エラーコード
+            message:
+              type: string
+              description: エラーメッセージ

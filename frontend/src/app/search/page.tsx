@@ -25,7 +25,6 @@ export default function SearchPage() {
     const handleSearch = async (query: string) => {
         setIsSearching(true);
         setCurrentQuery(query);
-        setSelectedIds([]);
         setTopicSegments([]);
         setError(null);
         try {
@@ -52,13 +51,13 @@ export default function SearchPage() {
         setError(null);
 
         try {
-            const topics = await knowledgeApi.analyzeTopics(query);
+            const topics = await knowledgeApi.segmentTopics(query);
             setTopicSegments(topics);
         } catch (err) {
             const errorMessage = err instanceof ApiError ? err.message : 'Failed to analyze topics';
             setError(errorMessage);
             console.error('Analyze topics error:', err);
-            
+
             // エラー時はリトライ可能なメッセージを表示（サーバーエラーの場合）
             if (err instanceof ApiError && err.status >= 500) {
                 setError(`${errorMessage} Please try again.`);
@@ -91,7 +90,7 @@ export default function SearchPage() {
             const errorMessage = err instanceof ApiError ? err.message : 'Failed to connect knowledge';
             setError(errorMessage);
             console.error('Connect error:', err);
-            
+
             // エラー時はリトライ可能なメッセージを表示（サーバーエラーの場合）
             if (err instanceof ApiError && err.status >= 500) {
                 setError(`${errorMessage} Please try again.`);
@@ -157,7 +156,7 @@ export default function SearchPage() {
                                     {topicSegments.map((topic, index) => {
                                         const hasRelatedKnowledge = topic.relatedKnowledge && topic.relatedKnowledge.length > 0;
                                         const highMatchCount = topic.relatedKnowledge?.filter(r => r.relevanceScore >= 0.8).length || 0;
-                                        
+
                                         return (
                                             <div
                                                 key={index}
@@ -174,7 +173,7 @@ export default function SearchPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    
+
                                                     <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
                                                         {topic.content}
                                                     </p>
