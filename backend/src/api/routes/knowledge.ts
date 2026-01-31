@@ -1,511 +1,224 @@
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { getContainer } from '../../infrastructure/di/container.js';
-import { CreateKnowledgeInput } from '@/domain/models/Knowledge';
-import {
-    KnowledgeListResponseSchema,
-    KnowledgeResponseSchema,
-    SearchResponseSchema,
-    CreateKnowledgeInputSchema,
-    SearchRequestSchema,
-    ConnectRequestSchema,
-    AnalyzeTopicsRequestSchema,
-    AnalyzeTopicsResponseSchema,
-    ConnectTopicsRequestSchema,
-    ErrorResponseSchema,
-} from '../schemas/knowledge.js';
+import { Hono } from "hono";
+import { getContainer } from "../../infrastructure/bootstrap/container.js";
+import type { CreateKnowledgeInput } from "@/domain/models/Knowledge";
 
-const app = new OpenAPIHono();
+/**
+ * ナレッジルートのファクトリ関数
+ * 初期化後にコンテナを取得してルートを作成
+ */
+export function createKnowledgeRoutes(): Hono {
+  const app = new Hono();
+  const container = getContainer();
 
-// GET /api/knowledge - 全ナレッジ取得
-const getAllRoute = createRoute({
-    method: 'get',
-    path: '/',
-    summary: '全ナレッジ取得',
-    description: '登録されているすべてのナレッジを取得します',
-    tags: ['Knowledge'],
-    responses: {
-        200: {
-            description: '成功',
-            content: {
-                'application/json': {
-                    schema: KnowledgeListResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+  // GET /api/knowledge - 全ナレッジ取得
+  app.get("/", async (c) => {
+    const knowledge = await container.getAllKnowledgeUseCase.execute();
+    const serialized = knowledge.map((k) => ({
+      ...k,
+      createdAt: k.createdAt.toISOString(),
+      connections: [...k.connections],
+    }));
+    return c.json({ data: serialized });
+  });
 
-app.openapi(getAllRoute, async (c) => {
-    try {
-        const container = getContainer();
-        const knowledge = await container.getAllKnowledgeUseCase.execute();
-        // DateをISO文字列に変換、readonly配列を通常の配列に変換
-        const serialized = knowledge.map((k) => ({
-            ...k,
-            createdAt: k.createdAt.toISOString(),
-            connections: [...k.connections],
-        }));
-        return c.json({ data: serialized }, 200);
-    } catch (error) {
-        throw error;
-    }
-});
+  // GET /api/knowledge/:id - IDでナレッジ取得
+  app.get("/:id", async (c) => {
+    const id = c.req.param("id");
+    const knowledge = await container.getKnowledgeByIdUseCase.execute(id);
+    return c.json({
+      data: {
+        ...knowledge,
+        createdAt: knowledge.createdAt.toISOString(),
+        connections: [...knowledge.connections],
+      },
+    });
+  });
 
-// GET /api/knowledge/:id - IDでナレッジ取得
-const getByIdRoute = createRoute({
-    method: 'get',
-    path: '/{id}',
-    summary: 'IDでナレッジ取得',
-    description: '指定されたIDのナレッジを取得します',
-    tags: ['Knowledge'],
-    request: {
-        params: z.object({
-            id: z.string().describe('ナレッジのID'),
-        }),
-    },
-    responses: {
-        200: {
-            description: '成功',
-            content: {
-                'application/json': {
-                    schema: KnowledgeResponseSchema,
-                },
-            },
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+  // POST /api/knowledge/search - ナレッジ検索
+  app.post("/search", async (c) => {
+    const { query } = await c.req.json<{ query: string }>();
+    const results = await container.searchKnowledgeUseCase.execute(query);
+    const serialized = results.map((r) => ({
+      knowledge: {
+        ...r.knowledge,
+        createdAt: r.knowledge.createdAt.toISOString(),
+        connections: [...r.knowledge.connections],
+      },
+      relevanceScore: r.relevanceScore,
+    }));
+    return c.json({ data: serialized });
+  });
 
-app.openapi(getByIdRoute, async (c) => {
-    try {
-        const { id } = c.req.valid('param');
-        const container = getContainer();
-        const knowledge = await container.getKnowledgeByIdUseCase.execute(id);
-        return c.json({
-            data: {
-                ...knowledge,
-                createdAt: knowledge.createdAt.toISOString(),
-                connections: [...knowledge.connections],
-            },
-        }, 200);
-    } catch (error) {
-        throw error;
-    }
-});
+  // POST /api/knowledge - ナレッジ作成
+  app.post("/", async (c) => {
+    const input = await c.req.json<CreateKnowledgeInput>();
+    const knowledge = await container.createKnowledgeUseCase.execute(input);
+    return c.json(
+      {
+        data: {
+          ...knowledge,
+          createdAt: knowledge.createdAt.toISOString(),
+          connections: [...knowledge.connections],
+        },
+      },
+      201,
+    );
+  });
 
-// POST /api/knowledge/search - ナレッジ検索
-const searchRoute = createRoute({
-    method: 'post',
-    path: '/search',
-    summary: 'ナレッジ検索',
-    description: 'キーワードでナレッジを検索します',
-    tags: ['Knowledge'],
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: SearchRequestSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        200: {
-            description: '成功',
-            content: {
-                'application/json': {
-                    schema: SearchResponseSchema,
-                },
-            },
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+  // POST /api/knowledge/:id/connect - ナレッジ接続
+  app.post("/:id/connect", async (c) => {
+    const id = c.req.param("id");
+    const { targetIds } = await c.req.json<{ targetIds: string[] }>();
+    await container.connectKnowledgeUseCase.execute(id, targetIds);
+    return c.body(null, 204);
+  });
 
-app.openapi(searchRoute, async (c) => {
-    try {
-        const { query } = c.req.valid('json');
-        const container = getContainer();
-        const results = await container.searchKnowledgeUseCase.execute(query);
-        // DateをISO文字列に変換、readonly配列を通常の配列に変換
-        const serialized = results.map((r) => ({
+  // GET /api/knowledge/:id/related - 関連ナレッジ検索
+  app.get("/:id/related", async (c) => {
+    const id = c.req.param("id");
+    const knowledge = await container.getKnowledgeByIdUseCase.execute(id);
+    const topicText = `${knowledge.title}\n${knowledge.content}`;
+
+    const results = await container.searchRelatedKnowledgeUseCase.execute(
+      topicText,
+      0.7, // 閾値: 70%以上
+      10, // 最大10件
+    );
+
+    const serialized = results.map((r) => ({
+      knowledge: {
+        ...r.knowledge,
+        createdAt: r.knowledge.createdAt.toISOString(),
+        connections: [...r.knowledge.connections],
+      },
+      relevanceScore: r.relevanceScore,
+    }));
+
+    return c.json({ data: serialized });
+  });
+
+  // POST /api/knowledge/segment-topics - トピック分割
+  app.post("/segment-topics", async (c) => {
+    const { content } = await c.req.json<{ content: string }>();
+
+    console.log(
+      "Segmenting topics for content:",
+      content.substring(0, 100) + "...",
+    );
+
+    const topics = await container.segmentTopicsUseCase.execute(content);
+
+    console.log(`Segmented into ${topics.length} topics`);
+
+    // 各トピックに関連ナレッジを検索
+    const topicsWithRelatedKnowledge = await Promise.all(
+      topics.map(async (topic) => {
+        try {
+          const topicText = `${topic.title}\n${topic.content}`;
+          const relatedKnowledge =
+            await container.searchRelatedKnowledgeUseCase.execute(
+              topicText,
+              0.7, // 閾値: 70%以上
+              5, // 最大5件
+            );
+
+          const serializedRelatedKnowledge = relatedKnowledge.map((r) => ({
             knowledge: {
-                ...r.knowledge,
-                createdAt: r.knowledge.createdAt.toISOString(),
-                connections: [...r.knowledge.connections],
+              ...r.knowledge,
+              createdAt: r.knowledge.createdAt.toISOString(),
+              connections: [...r.knowledge.connections],
             },
             relevanceScore: r.relevanceScore,
-        }));
-        return c.json({ data: serialized }, 200);
-    } catch (error) {
-        throw error;
-    }
-});
+          }));
 
-// POST /api/knowledge - ナレッジ作成
-const createKnowledgeRoute = createRoute({
-    method: 'post',
-    path: '/',
-    summary: 'ナレッジ作成',
-    description: '新しいナレッジを作成します',
-    tags: ['Knowledge'],
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: CreateKnowledgeInputSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        201: {
-            description: '作成成功',
-            content: {
-                'application/json': {
-                    schema: KnowledgeResponseSchema,
-                },
-            },
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+          return {
+            ...topic,
+            relatedKnowledge: serializedRelatedKnowledge,
+          };
+        } catch (error) {
+          console.warn(
+            `Failed to search related knowledge for topic "${topic.title}":`,
+            error,
+          );
+          return {
+            ...topic,
+            relatedKnowledge: [],
+          };
+        }
+      }),
+    );
 
-app.openapi(createKnowledgeRoute, async (c) => {
-    try {
-        const input: CreateKnowledgeInput = c.req.valid('json');
-        const container = getContainer();
-        const knowledge = await container.createKnowledgeUseCase.execute(input);
-        return c.json(
-            {
-                data: {
-                    ...knowledge,
-                    createdAt: knowledge.createdAt.toISOString(),
-                    connections: [...knowledge.connections],
-                },
-            },
-            201
+    return c.json({ data: topicsWithRelatedKnowledge });
+  });
+
+  // POST /api/knowledge/connect-topics - トピックをナレッジとして作成・接続
+  app.post("/connect-topics", async (c) => {
+    const { topics } = await c.req.json<{
+      topics: Array<{
+        title: string;
+        content: string;
+        relatedKnowledgeIds?: string[];
+      }>;
+    }>();
+
+    // 各トピックをナレッジとして作成
+    const createdKnowledgeList: Array<{
+      id: string;
+      title: string;
+      content: string;
+      embedding: number[];
+    }> = [];
+
+    for (const topic of topics) {
+      const newKnowledge = await container.createKnowledgeUseCase.execute({
+        title: topic.title,
+        content: topic.content,
+      });
+
+      // 埋め込みベクトルを生成（トピック同士の類似度計算用）
+      const embedding = await container.vertexAIService.generateEmbedding(
+        `${topic.title}\n${topic.content}`,
+      );
+
+      createdKnowledgeList.push({
+        id: newKnowledge.id,
+        title: topic.title,
+        content: topic.content,
+        embedding,
+      });
+
+      // 関連ナレッジがある場合、接続
+      if (topic.relatedKnowledgeIds && topic.relatedKnowledgeIds.length > 0) {
+        await container.connectKnowledgeUseCase.execute(
+          newKnowledge.id,
+          topic.relatedKnowledgeIds,
         );
-    } catch (error) {
-        throw error;
+      }
     }
-});
 
-// POST /api/knowledge/:id/connect - ナレッジ接続
-const connectRoute = createRoute({
-    method: 'post',
-    path: '/{id}/connect',
-    summary: 'ナレッジ接続',
-    description: '指定されたナレッジを他のナレッジに接続します',
-    tags: ['Knowledge'],
-    request: {
-        params: z.object({
-            id: z.string().describe('接続元のナレッジID'),
-        }),
-        body: {
-            content: {
-                'application/json': {
-                    schema: ConnectRequestSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        204: {
-            description: '接続成功',
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+    // トピック同士の類似度を計算して接続
+    const similarityThreshold = 0.7;
 
-app.openapi(connectRoute, async (c) => {
-    try {
-        const { id } = c.req.valid('param');
-        const { targetIds } = c.req.valid('json');
-        const container = getContainer();
-        await container.connectKnowledgeUseCase.execute(id, targetIds);
-        return c.body(null, 204);
-    } catch (error) {
-        throw error;
-    }
-});
+    for (let i = 0; i < createdKnowledgeList.length; i++) {
+      for (let j = i + 1; j < createdKnowledgeList.length; j++) {
+        const knowledge1 = createdKnowledgeList[i];
+        const knowledge2 = createdKnowledgeList[j];
 
-// POST /api/knowledge/analyze-topics - トピック分割
-const analyzeTopicsRoute = createRoute({
-    method: 'post',
-    path: '/analyze-topics',
-    summary: 'トピック分割',
-    description: '入力テキストをVertex AIを使用して複数のトピックに分割します',
-    tags: ['Knowledge'],
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: AnalyzeTopicsRequestSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        200: {
-            description: '成功',
-            content: {
-                'application/json': {
-                    schema: AnalyzeTopicsResponseSchema,
-                },
-            },
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
-
-app.openapi(analyzeTopicsRoute, async (c) => {
-    try {
-        const { text } = c.req.valid('json');
-        
-        console.log('Analyzing topics for text:', text.substring(0, 100) + '...');
-        
-        const container = getContainer();
-        const topics = await container.segmentTopicsUseCase.execute(text);
-        
-        console.log(`Segmented into ${topics.length} topics`);
-
-        // 各トピックに関連ナレッジを検索
-        const topicsWithRelatedKnowledge = await Promise.all(
-            topics.map(async (topic) => {
-                try {
-                    // トピックのテキスト（タイトル + 内容）で関連ナレッジを検索
-                    const topicText = `${topic.title}\n${topic.content}`;
-                    const relatedKnowledge = await container.searchRelatedKnowledgeUseCase.execute(
-                        topicText,
-                        0.7, // 閾値: 70%以上
-                        5 // 最大5件
-                    );
-
-                    // DateをISO文字列に変換、readonly配列を通常の配列に変換
-                    const serializedRelatedKnowledge = relatedKnowledge.map((r) => ({
-                        knowledge: {
-                            ...r.knowledge,
-                            createdAt: r.knowledge.createdAt.toISOString(),
-                            connections: [...r.knowledge.connections],
-                        },
-                        relevanceScore: r.relevanceScore,
-                    }));
-
-                    return {
-                        ...topic,
-                        relatedKnowledge: serializedRelatedKnowledge,
-                    };
-                } catch (error) {
-                    // 関連ナレッジ検索でエラーが発生しても、トピック自体は返す
-                    console.warn(`Failed to search related knowledge for topic "${topic.title}":`, error);
-                    return {
-                        ...topic,
-                        relatedKnowledge: [],
-                    };
-                }
-            })
+        const similarity = container.vertexAIService.cosineSimilarity(
+          knowledge1.embedding,
+          knowledge2.embedding,
         );
 
-        return c.json({ data: topicsWithRelatedKnowledge }, 200);
-    } catch (error) {
-        // エラーの詳細をログに出力
-        console.error('Error in analyzeTopicsRoute:', error);
-        if (error instanceof Error) {
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
+        if (similarity >= similarityThreshold) {
+          await container.connectKnowledgeUseCase.execute(knowledge1.id, [
+            knowledge2.id,
+          ]);
         }
-        throw error;
+      }
     }
-});
 
-// POST /api/knowledge/connect-topics - トピックをナレッジとして作成・接続
-const connectTopicsRoute = createRoute({
-    method: 'post',
-    path: '/connect-topics',
-    summary: 'トピック接続',
-    description: '選択されたトピックをナレッジとして作成し、関連ナレッジと接続します',
-    tags: ['Knowledge'],
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: ConnectTopicsRequestSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        204: {
-            description: '接続成功',
-        },
-        400: {
-            description: 'バリデーションエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-        500: {
-            description: 'サーバーエラー',
-            content: {
-                'application/json': {
-                    schema: ErrorResponseSchema,
-                },
-            },
-        },
-    },
-});
+    return c.body(null, 204);
+  });
 
-app.openapi(connectTopicsRoute, async (c) => {
-    try {
-        const { topics } = c.req.valid('json');
-        
-        const container = getContainer();
-        
-        // 各トピックをナレッジとして作成
-        const createdKnowledgeList: Array<{ id: string; title: string; content: string; embedding: number[] }> = [];
-        
-        for (const topic of topics) {
-            const newKnowledge = await container.createKnowledgeUseCase.execute({
-                title: topic.title,
-                content: topic.content,
-            });
-
-            // 埋め込みベクトルを生成（トピック同士の類似度計算用）
-            const embedding = await container.vertexAIService.generateEmbedding(
-                `${topic.title}\n${topic.content}`
-            );
-            
-            createdKnowledgeList.push({
-                id: newKnowledge.id,
-                title: topic.title,
-                content: topic.content,
-                embedding,
-            });
-
-            // 関連ナレッジがある場合、接続
-            if (topic.relatedKnowledgeIds && topic.relatedKnowledgeIds.length > 0) {
-                await container.connectKnowledgeUseCase.execute(
-                    newKnowledge.id,
-                    topic.relatedKnowledgeIds
-                );
-            }
-        }
-
-        // トピック同士の類似度を計算して接続
-        // 類似度閾値: 0.7（70%以上）
-        const similarityThreshold = 0.7;
-        
-        for (let i = 0; i < createdKnowledgeList.length; i++) {
-            for (let j = i + 1; j < createdKnowledgeList.length; j++) {
-                const knowledge1 = createdKnowledgeList[i];
-                const knowledge2 = createdKnowledgeList[j];
-                
-                // コサイン類似度を計算
-                const similarity = container.vertexAIService.cosineSimilarity(
-                    knowledge1.embedding,
-                    knowledge2.embedding
-                );
-                
-                // 閾値以上の場合は接続（無理に結びつけない）
-                if (similarity >= similarityThreshold) {
-                    await container.connectKnowledgeUseCase.execute(
-                        knowledge1.id,
-                        [knowledge2.id]
-                    );
-                }
-            }
-        }
-
-        return c.body(null, 204);
-    } catch (error) {
-        throw error;
-    }
-});
-
-export { app as knowledgeRoutes };
+  return app;
+}

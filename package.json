@@ -4,6 +4,9 @@
   "private": true,
   "description": "Knowledge Network - Frontend (Firebase) + Backend (Cloud Run)",
   "scripts": {
+    "generate:types": "npm run generate:types:frontend && npm run generate:types:backend",
+    "generate:types:frontend": "openapi-typescript docs/api.yml -o frontend/contracts/api.ts",
+    "generate:types:backend": "openapi-typescript docs/api.yml -o backend/contracts/api.ts",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "docker:dev:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "docker:dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
@@ -11,5 +14,8 @@
     "docker:prod:build": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
     "docker:prod:down": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down",
     "docker:prod:up": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.10.1"
   }
 }

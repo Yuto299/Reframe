@@ -1,6 +1,6 @@
-import { KnowledgeRepository } from '@/domain/repositories/KnowledgeRepository';
-import { Knowledge, SearchResult } from '@/domain/models/Knowledge';
-import { VertexAIService } from '@/infrastructure/services/VertexAIService.js';
+import { KnowledgeRepository } from '../../domain/repositories/KnowledgeRepository.js';
+import { Knowledge, SearchResult } from '../../domain/models/Knowledge.js';
+import { VertexAIService } from '../../infrastructure/services/VertexAIService.js';
 import { UseCaseExecutionError } from '../errors/ApplicationError.js';
 
 /**

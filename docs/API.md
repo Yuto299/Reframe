@@ -316,28 +316,39 @@ interface CreateKnowledgeInput {
 }
 ```
 
+---
+
 ## 使用例
+
+### ベースURL
+- **開発環境**: `http://localhost:8080`
+- **本番環境**: Cloud RunのデプロイURL
 
 ### cURLでの使用例
 
-#### 1. 知識の一覧取得
+#### 1. ヘルスチェック
+```bash
+curl -X GET http://localhost:8080/health
+```
+
+#### 2. 知識の一覧取得
 ```bash
 curl -X GET http://localhost:8080/api/knowledge
 ```
 
-#### 2. 知識の取得
+#### 3. 知識の取得（ID指定）
 ```bash
-curl -X GET http://localhost:8080/api/knowledge/knowledge-id
+curl -X GET http://localhost:8080/api/knowledge/{knowledge-id}
 ```
 
-#### 3. 知識の検索
+#### 4. 知識の検索
 ```bash
 curl -X POST http://localhost:8080/api/knowledge/search \
   -H "Content-Type: application/json" \
   -d '{"query": "React"}'
 ```
 
-#### 4. 知識の作成
+#### 5. 知識の作成
 ```bash
 curl -X POST http://localhost:8080/api/knowledge \
   -H "Content-Type: application/json" \
@@ -347,19 +358,64 @@ curl -X POST http://localhost:8080/api/knowledge \
   }'
 ```
 
-#### 5. 知識の接続
+#### 6. 知識の接続
 ```bash
-curl -X POST http://localhost:8080/api/knowledge/knowledge-id/connect \
+curl -X POST http://localhost:8080/api/knowledge/{knowledge-id}/connect \
   -H "Content-Type: application/json" \
   -d '{
     "targetIds": ["target-id-1", "target-id-2"]
   }'
 ```
 
-## レート制限
+#### 7. 関連ナレッジ検索
+```bash
+curl -X GET http://localhost:8080/api/knowledge/{knowledge-id}/related
+```
+
+#### 8. トピック分割
+```bash
+curl -X POST http://localhost:8080/api/knowledge/segment-topics \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "長文のコンテンツ..."
+  }'
+```
+
+#### 9. トピック接続
+```bash
+curl -X POST http://localhost:8080/api/knowledge/connect-topics \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topics": [
+      {
+        "title": "トピック1",
+        "content": "内容1",
+        "relatedKnowledgeIds": []
+      }
+    ]
+  }'
+```
+
+---
+
+## 開発者向けノート
+
+### 接続の仕組み
+
+ナレッジの接続は**双方向**です。`/api/knowledge/{id}/connect`でA→Bを接続すると、自動的にB→Aも接続されます。
+
+### トピック分割の活用
+
+長文コンテンツを登録する際は、`/api/knowledge/segment-topics`で事前にトピックを分割し、各トピックを個別のナレッジとして登録することで、より細かい粒度での知識管理が可能になります。
+
+---
+
+## 将来の拡張予定
+
+### レート制限
 
 現バージョンではレート制限は実装されていません。将来の拡張で実装予定です。
 
-## バージョニング
+### バージョニング
 
 現バージョンではAPIバージョニングは実装されていません。将来の拡張で実装予定です。

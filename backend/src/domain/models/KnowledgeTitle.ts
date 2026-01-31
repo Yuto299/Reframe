@@ -1,4 +1,4 @@
-import { KnowledgeValidationError } from '../errors/DomainError';
+import { KnowledgeValidationError } from '../errors/DomainError.js';
 
 /**
  * ナレッジタイトルの値オブジェクト

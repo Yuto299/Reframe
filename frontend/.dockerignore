@@ -9,3 +9,6 @@ out
 .git
 .gitignore
 *.md
+.firebase
+.firebaserc
+firebase.json
