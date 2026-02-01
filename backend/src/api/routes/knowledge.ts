@@ -100,15 +100,7 @@ export function createKnowledgeRoutes(): Hono {
   // POST /api/knowledge/segment-topics - トピック分割
   app.post("/segment-topics", async (c) => {
     const { content } = await c.req.json<{ content: string }>();
-
-    console.log(
-      "Segmenting topics for content:",
-      content.substring(0, 100) + "...",
-    );
-
     const topics = await container.segmentTopicsUseCase.execute(content);
-
-    console.log(`Segmented into ${topics.length} topics`);
 
     // 各トピックに関連ナレッジを検索
     const topicsWithRelatedKnowledge = await Promise.all(
