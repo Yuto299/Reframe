@@ -292,7 +292,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Topic'
+                      $ref: '#/components/schemas/TopicWithRelatedKnowledge'
         '400':
           description: バリデーションエラー
           content:
@@ -350,7 +350,6 @@ components:
         - id
         - title
         - content
-        - embedding
         - connections
         - createdAt
       properties:
@@ -363,11 +362,6 @@ components:
         content:
           type: string
           description: ナレッジの内容
-        embedding:
-          type: array
-          items:
-            type: number
-          description: 埋め込みベクトル
         connections:
           type: array
           items:
@@ -409,7 +403,6 @@ components:
       required:
         - title
         - content
-        - relatedKnowledgeIds
       properties:
         title:
           type: string
@@ -417,11 +410,25 @@ components:
         content:
           type: string
           description: トピックの内容
-        relatedKnowledgeIds:
+
+    TopicWithRelatedKnowledge:
+      type: object
+      required:
+        - title
+        - content
+        - relatedKnowledge
+      properties:
+        title:
+          type: string
+          description: トピックのタイトル
+        content:
+          type: string
+          description: トピックの内容
+        relatedKnowledge:
           type: array
           items:
-            type: string
-          description: 関連するナレッジのIDリスト
+            $ref: '#/components/schemas/SearchResult'
+          description: 関連するナレッジの検索結果
 
     TopicInput:
       type: object
@@ -435,6 +442,11 @@ components:
         content:
           type: string
           description: トピックの内容
+        relatedKnowledgeIds:
+          type: array
+          items:
+            type: string
+          description: 関連するナレッジのIDリスト（オプショナル）
 
     Error:
       type: object

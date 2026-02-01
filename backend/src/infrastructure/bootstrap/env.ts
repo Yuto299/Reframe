@@ -3,10 +3,12 @@ import { resolve } from "path";
 
 /**
  * 環境変数を初期化
- * Dockerコンテナ内では /app/.env、ローカルでは ../.env を試す
+ * 開発環境: トップレベルの.envを読み込む
+ * 本番環境: クラウドの環境変数を使用
  */
 export function initializeEnv(): void {
-  config({ path: resolve(process.cwd(), "../.env") });
+  config({ path: resolve(process.cwd(), ".env") });
+  validateEnv();
 }
 
 /**

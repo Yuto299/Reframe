@@ -217,6 +217,15 @@ export interface paths {
         /**
          * ナレッジ検索
          * @description キーワードでナレッジを検索します
+         *
+         *     検索アルゴリズム:
+         *     1. タイトルに完全一致: +10点
+         *     2. コンテンツに完全一致: +5点
+         *     3. タイトルに単語一致: +3点/単語
+         *     4. コンテンツに単語一致: +1点/単語
+         *     5. スコアが0より大きいもののみ返却
+         *     6. スコアの降順でソート
+         *     7. 最大10件まで返却
          */
         post: {
             parameters: {
@@ -434,7 +443,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            data?: components["schemas"]["Topic"][];
+                            data?: components["schemas"]["TopicWithRelatedKnowledge"][];
                         };
                     };
                 };
@@ -537,8 +546,6 @@ export interface components {
             title: string;
             /** @description ナレッジの内容 */
             content: string;
-            /** @description 埋め込みベクトル */
-            embedding: number[];
             /** @description 接続されているナレッジのIDリスト */
             connections: string[];
             /**
@@ -566,14 +573,22 @@ export interface components {
             title: string;
             /** @description トピックの内容 */
             content: string;
-            /** @description 関連するナレッジのIDリスト */
-            relatedKnowledgeIds: string[];
+        };
+        TopicWithRelatedKnowledge: {
+            /** @description トピックのタイトル */
+            title: string;
+            /** @description トピックの内容 */
+            content: string;
+            /** @description 関連するナレッジの検索結果 */
+            relatedKnowledge: components["schemas"]["SearchResult"][];
         };
         TopicInput: {
             /** @description トピックのタイトル */
             title: string;
             /** @description トピックの内容 */
             content: string;
+            /** @description 関連するナレッジのIDリスト（オプショナル） */
+            relatedKnowledgeIds?: string[];
         };
         Error: {
             error: {
